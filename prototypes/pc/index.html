@@ -1,0 +1,3066 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mots Cultes — prototype PC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#14162B; --panel:#1F2240; --panel2:#2B2F52; --line:#3A3E63;
+  --text:#F4F4F8; --muted:#A9ADCB;
+  --def:#E9E4D4; --def-ink:#4A4537; --filler:#2B2F52; --hard:#DC2626;
+  --sel:#FEF3C7; --sel-ring:#D97706; --act:#FDE68A; --act-ring:#92400E;
+  --gold:#E8B04A; --myst:#B45309;
+  --cell:60px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:'Space Grotesk',system-ui,-apple-system,sans-serif}
+button,input{font-family:inherit;color:inherit}
+button:focus-visible,input:focus-visible{outline:2px solid #8B93FF;outline-offset:2px}
+.screen{display:none;height:100vh}
+.screen.on{display:block}
+.eyebrow{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.btn{height:44px;border:0;border-radius:10px;background:var(--panel2);font-size:15px;font-weight:600;cursor:pointer;padding:0 16px}
+.btn:hover{filter:brightness(1.12)}
+.btn.primary{background:#FACC15;color:#1F2937;font-weight:700}
+.btn.ghost{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
+.btn.sm{height:34px;font-size:13px;padding:0 12px}
+.btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.card{background:var(--panel);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.card h2{font-size:12px;margin:0;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;font-weight:600}
+.dot{width:10px;height:10px;border-radius:50%;flex:none;display:inline-block}
+.note{font-size:12px;color:var(--muted);line-height:1.45;margin:0}
+kbd{font-family:inherit;font-size:11px;background:var(--panel2);border-radius:4px;padding:1px 6px;border:1px solid var(--line)}
+
+/* ---------- Salon ---------- */
+#scrLobby{overflow-y:auto}
+.lobby{max-width:960px;margin:0 auto;padding:40px 24px;display:flex;flex-direction:column;gap:20px}
+.lobby h1{font-size:36px;margin:4px 0 0}
+.lobby .sub{color:var(--muted);font-size:15px;margin:6px 0 0}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+@media (max-width:760px){.cols{grid-template-columns:1fr}}
+.codebox{display:flex;align-items:baseline;justify-content:space-between}
+.codebox .code{font-size:34px;font-weight:700;letter-spacing:.18em}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:14px;font-weight:500}
+.field input[type=text],.field input[type=number]{height:44px;border-radius:10px;border:0;background:var(--panel2);font-size:16px;padding:0 14px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.stepper{display:flex;align-items:center;gap:10px}
+.stepper button{width:40px;height:40px;border-radius:10px;border:0;background:var(--panel2);font-size:20px;cursor:pointer}
+.stepper span{min-width:18px;text-align:center;font-size:18px;font-weight:700}
+.bots{display:flex;gap:6px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;background:var(--panel2);border-radius:999px;padding:5px 10px}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;background:var(--panel2);border-radius:10px;padding:4px}
+.seg button{height:36px;border:0;border-radius:7px;background:transparent;font-size:14px;font-weight:600;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed=true]{background:#F4F4F8;color:#14162B}
+.theme{display:grid;grid-template-columns:120px 1fr 48px;align-items:center;gap:12px}
+.theme label{font-size:14px}
+.rules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.rules{grid-template-columns:1fr}}
+.theme output{text-align:right;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:#FACC15}
+
+/* ---------- Jeu ---------- */
+.game{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;height:100vh;padding:20px 24px;max-width:1500px;margin:0 auto}
+.board{min-width:0;min-height:0;display:flex;align-items:center;justify-content:center}
+.grid{display:grid;grid-template-columns:repeat(10,var(--cell));grid-auto-rows:var(--cell);gap:1px;padding:1px;background:#4A4F7A;border-radius:4px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.grid.shake{animation:shake .35s ease}
+@keyframes shake{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+.cell{border:0;padding:0;margin:0;position:relative;display:flex;align-items:center;justify-content:center;background:#fff;cursor:pointer;font-weight:700;font-size:calc(var(--cell) * .54);line-height:1;overflow:hidden}
+.cell.let:hover{filter:brightness(.96)}
+.cell .l{position:relative;z-index:2}
+.cell .wm{position:absolute;left:14%;top:14%;width:72%;height:72%;fill:rgba(15,23,42,.13);z-index:1;pointer-events:none}
+.cell .mc{position:absolute;inset:8%;border-radius:50%;border:2px solid var(--myst);z-index:1;pointer-events:none}
+.cell .mn{position:absolute;right:3px;bottom:2px;font-size:calc(var(--cell) * .18);color:#92400E;font-weight:700;z-index:2;pointer-events:none}
+.cell.flash{animation:pop .6s ease}
+@keyframes pop{0%{transform:scale(.55);filter:brightness(1.5)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
+.cell.def{background:var(--def);color:var(--def-ink);flex-direction:column;align-items:stretch;justify-content:stretch;font-weight:500;cursor:pointer}
+.cell.def.hard{background:var(--hard);color:#fff}
+.cell.filler{background:var(--filler);cursor:default}
+.dq{flex:1 1 0;min-height:0;position:relative;display:flex;align-items:center;justify-content:center;padding:2px 3px 2px 3px}
+.dq + .dq{border-top:1px solid rgba(0,0,0,.18)}
+.cell.def.hard .dq + .dq{border-top-color:rgba(255,255,255,.35)}
+.dq .tx{font-size:calc(var(--cell) * .135);line-height:1.12;text-align:center;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:5;word-break:break-word;hyphens:auto}
+.cell.def.two .dq .tx{-webkit-line-clamp:2}
+.dq .ar{position:absolute;width:calc(var(--cell) * .2);height:calc(var(--cell) * .2)}
+.dq.r .ar{right:0;top:50%;transform:translateY(-50%)}
+.dq.d .ar{bottom:0;left:50%;transform:translateX(-50%)}
+.dq.r{padding-right:calc(var(--cell) * .16)}
+.dq.d{padding-bottom:calc(var(--cell) * .14)}
+.dq.done{opacity:.38}
+.dq.on{box-shadow:inset 0 0 0 3px var(--act-ring)}
+
+.side{min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding-right:2px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.top .c{font-size:18px;font-weight:700}
+.timer{display:flex;align-items:center;gap:6px;background:var(--panel);border-radius:999px;padding:8px 14px;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
+.menuwrap{position:relative}
+.menu{position:absolute;right:0;top:48px;background:#0B0C18;border:1px solid var(--line);border-radius:12px;padding:6px;display:flex;flex-direction:column;z-index:7;min-width:250px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.menu[hidden]{display:none}
+.menu button{height:40px;border:0;background:transparent;text-align:left;padding:0 12px;border-radius:8px;font-size:14px;cursor:pointer}
+.menu button:hover{background:var(--panel)}
+.menu .sep{height:1px;background:var(--line);margin:4px 6px}
+.menu .t{font-size:11px;color:var(--muted);padding:6px 12px 2px;letter-spacing:.06em;text-transform:uppercase}
+
+.scores{display:flex;flex-direction:column;gap:6px}
+.srow{display:grid;grid-template-columns:22px 1fr auto;align-items:center;gap:10px;background:var(--panel2);border-radius:10px;padding:8px 12px}
+.srow.me{box-shadow:inset 0 0 0 1.5px #8B93FF}
+.srow .rk{font-weight:700;color:var(--muted)}
+.srow .nm{display:flex;align-items:center;gap:8px;min-width:0;font-weight:600}
+.srow .nm small{color:var(--muted);font-weight:400}
+.srow .sc{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.srow.bump .sc{animation:bump .5s ease}
+@keyframes bump{40%{transform:scale(1.25);color:#FACC15}}
+
+.cluebox .hd{display:flex;align-items:center;gap:10px}
+.cluebox .ic{width:34px;height:34px;border-radius:8px;background:var(--panel2);display:flex;align-items:center;justify-content:center;flex:none}
+.cluebox .ic.hard{background:var(--hard)}
+.cluebox .clue{font-size:20px;font-weight:500;line-height:1.25;min-height:50px}
+.cluebox .meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.cluebox .meta .len{font-size:13px;color:var(--muted)}
+.badge{font-size:11px;font-weight:700;border-radius:5px;padding:3px 7px;white-space:nowrap}
+.badge.hard{background:var(--hard);color:#fff}
+.badge.tw{background:#F4F4F8;color:#14162B}
+.badge.vg{background:#14532D;color:#BBF7D0}
+.cluebox .acts{display:flex;gap:8px}
+.cluebox .acts .btn{flex:1}
+.notice{min-height:20px;font-size:13px;color:var(--muted)}
+.notice.err{color:#FCA5A5}
+.notice.ok{color:#86EFAC}
+
+.mslots{display:flex;gap:4px;flex-wrap:wrap}
+.mslot{width:28px;height:34px;border-radius:6px;border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#FDE68A}
+.mslot.f{background:#3B2F12}
+.prog{height:8px;background:var(--panel2);border-radius:4px;position:relative;overflow:visible}
+.prog i{display:block;height:100%;background:var(--gold);border-radius:4px;transition:width .3s}
+.prog b{position:absolute;left:80%;top:-4px;bottom:-4px;width:2px;background:#F4F4F8}
+.mcard.on{box-shadow:inset 0 0 0 2px var(--gold)}
+.mslot.cur{box-shadow:0 0 0 2px #F4F4F8}
+.mslot.g{color:rgba(253,230,138,.35)}
+.mslot.t{background:#5B4515;color:#FFFFFF}
+.mslot.ok{background:#14532D;border-color:#22C55E;color:#BBF7D0}
+.mslot.ko{border-color:#DC2626}
+.mres{font-size:14px;font-weight:600;border-radius:8px;padding:8px 10px}
+.mres.ok{background:#14532D;color:#BBF7D0}
+.mres.ko{background:#450A0A;color:#FCA5A5}
+.mbtns{display:flex;gap:8px}
+.mbtns .btn{flex:1}
+.mform{display:flex;gap:8px}
+.finalbox{background:#3B1D0A;box-shadow:inset 0 0 0 2px #F97316}
+.finalbox[hidden]{display:none}
+.finalbox h2{color:#FDBA74}
+.finalbox .big{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;color:#FDBA74}
+.finalbox p{margin:0;font-size:14px;line-height:1.4}
+.timer.hot{background:#7C2D12;color:#FED7AA}
+.answer{display:flex;gap:4px;flex-wrap:wrap}
+.answer span{width:30px;height:36px;border-radius:6px;background:#F4F4F8;color:#14162B;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700}
+.who{display:flex;align-items:center;gap:8px;font-size:14px}
+.recap .reason{font-size:15px;color:#FDE68A;margin:0}
+.mform input{flex:1;min-width:0;height:40px;border-radius:10px;border:0;background:var(--panel2);font-size:16px;padding:0 12px;text-transform:uppercase;letter-spacing:.1em}
+.mform input:disabled{opacity:.5}
+
+.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto}
+.feed li{display:grid;grid-template-columns:10px 40px 1fr;gap:8px;align-items:baseline;font-size:13px;line-height:1.35}
+.feed li .dot{transform:translateY(1px)}
+.feed li .t{color:var(--muted);font-variant-numeric:tabular-nums}
+.legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px;font-size:12px;color:#C9CCE4}
+.legend span{display:flex;align-items:center;gap:8px}
+.legend .sw{width:22px;height:22px;border-radius:4px;flex:none;position:relative;display:flex;align-items:center;justify-content:center}
+.keys{font-size:12px;color:var(--muted);line-height:1.9}
+
+/* ---------- Récap ---------- */
+#scrRecap{overflow-y:auto}
+.recap{max-width:1200px;margin:0 auto;padding:32px 24px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:900px){.recap{grid-template-columns:1fr}}
+.recap h1{font-size:34px;margin:4px 0 0}
+.recap .col{display:flex;flex-direction:column;gap:14px}
+.recap .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.recap .stat{background:var(--panel);border-radius:12px;padding:12px 14px}
+.recap .stat b{display:block;font-size:22px;margin-top:2px}
+.rank{background:var(--panel);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.rank.me{box-shadow:inset 0 0 0 1.5px #8B93FF}
+.rank .hd{display:flex;align-items:center;gap:10px}
+.rank .pos{width:32px;height:32px;border-radius:8px;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-weight:700}
+.rank .pos.p1{background:#FACC15;color:#1F2937}
+.rank .nm{flex:1;font-size:17px;font-weight:600;display:flex;align-items:center;gap:8px}
+.rank .tot{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.rank table{width:100%;border-collapse:collapse;font-size:14px}
+.rank td{padding:3px 0;color:#C9CCE4}
+.rank td:last-child{text-align:right;color:var(--text);font-variant-numeric:tabular-nums}
+.final{display:grid;grid-template-columns:repeat(10,32px);grid-auto-rows:32px;gap:1px;background:#4A4F7A;padding:1px;border-radius:3px;align-self:center}
+.final i{display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:700;font-size:16px}
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar{display:grid;grid-template-columns:120px 1fr 80px;align-items:center;gap:10px;font-size:13px}
+.bar .tr{height:8px;background:var(--panel2);border-radius:4px;overflow:hidden}
+.bar .tr i{display:block;height:100%;background:#FACC15}
+.bar .v{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.loading{position:fixed;inset:0;background:rgba(20,22,43,.85);display:flex;align-items:center;justify-content:center;font-size:18px;z-index:20}
+.loading[hidden]{display:none}
+
+/* ---------- Définitions de la communauté ---------- */
+#scrEditor,#scrModo{overflow-y:auto}
+.ed{max-width:1100px;margin:0 auto;padding:32px 24px 40px;display:flex;flex-direction:column;gap:18px}
+.ed h1{font-size:32px;margin:4px 0 0}
+.ed .sub{color:var(--muted);font-size:15px;margin:6px 0 0}
+.edcols{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.edcols{grid-template-columns:1fr}}
+.edside{display:flex;flex-direction:column;gap:20px}
+.field select,.field textarea{border-radius:10px;border:0;background:var(--panel2);font-size:16px;padding:10px 14px;color:var(--text);font-family:inherit}
+.field select{height:44px}
+.field textarea{resize:vertical;line-height:1.4}
+.hint{font-size:12px;color:var(--muted);min-height:16px;line-height:1.35}
+.hint.err{color:#FCA5A5}
+.hint.warn,.warntxt{color:#FDE68A}
+.count{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.count.near{color:#FDE68A}
+.seg4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.msg{font-size:14px;min-height:20px}
+.msg.ok{color:#86EFAC}
+.msg.err{color:#FCA5A5}
+.pv{display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap}
+.pv figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:6px}
+.pv figcaption{font-size:11px;color:var(--muted)}
+.pvcell{--cell:72px;width:72px;height:72px;border-radius:3px;overflow:hidden;box-shadow:0 0 0 1px #4A4F7A}
+.pvcell .cell{width:100%;height:100%;cursor:default}
+.pvcell.small{--cell:60px;width:60px;height:60px;flex:none}
+.pvword{display:flex;gap:1px;background:#4A4F7A;padding:1px;border-radius:3px}
+.pvword span{width:30px;height:30px;background:#fff;color:#1F2937;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px}
+.mine{display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto}
+.mrow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 10px;background:var(--panel2);border-radius:10px;padding:8px 10px;font-size:14px}
+.mrow .full{flex-basis:100%}
+.st{font-size:11px;font-weight:700;border-radius:5px;padding:3px 7px;white-space:nowrap}
+.st.pending{background:#3B2F12;color:#FDE68A}
+.st.approved{background:#14532D;color:#BBF7D0}
+.st.rejected{background:#450A0A;color:#FCA5A5}
+.molist{display:flex;flex-direction:column;gap:12px}
+.mohead{display:flex;gap:16px;align-items:flex-start}
+.mobody{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.answ{font-size:18px;font-weight:700;letter-spacing:.12em;background:#F4F4F8;color:#14162B;border-radius:6px;padding:2px 9px}
+.moclue{font-size:18px;font-weight:500}
+.moexpl{margin:0;font-size:14px;line-height:1.45;color:#C9CCE4}
+.moacts{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px}
+.moacts .field span{font-size:12px;color:var(--muted)}
+.moacts .grow{flex:1;min-width:200px}
+.moacts input{height:36px;border-radius:8px;border:0;background:var(--panel2);font-size:14px;padding:0 10px;width:100%}
+.moacts select{height:36px;padding:0 10px;font-size:14px}
+.btn.danger{color:#FCA5A5;box-shadow:inset 0 0 0 1.5px #7F1D1D}
+.filebtn{display:inline-flex;align-items:center}
+.badge.d-facile{background:#14532D;color:#BBF7D0}
+.badge.d-moyen{background:#1E3A8A;color:#BFDBFE}
+.badge.d-difficile{background:var(--hard);color:#fff}
+.badge.d-expert{background:#4C0519;color:#FECDD3;box-shadow:inset 0 0 0 1px #FB7185}
+.expl{font-size:14px;line-height:1.45;color:#C9CCE4;background:var(--panel2);border-radius:10px;padding:10px 12px}
+.expl b{color:var(--text)}
+.ed.wide{max-width:1400px}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.filters .field span,.trow .field span{font-size:12px;color:var(--muted)}
+.filters input,.filters select{height:40px;border-radius:9px;border:0;background:var(--panel2);font-size:14px;padding:0 10px;color:var(--text);font-family:inherit}
+.filters .grow{flex:1;min-width:220px}
+.tablewrap{overflow-x:auto;background:var(--panel);border-radius:14px}
+.dbt{width:100%;border-collapse:collapse;font-size:14px;min-width:980px}
+.dbt th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:12px 12px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel)}
+.dbt td{padding:9px 12px;border-bottom:1px solid #2A2E50;vertical-align:top}
+.dbt td:first-child{white-space:nowrap}
+.dbt td small{margin-left:6px}
+.dbt .note{font-size:12px;margin-top:2px}
+.dbt select{height:32px;border-radius:7px;border:0;background:var(--panel2);color:var(--text);font-size:13px;padding:0 8px;font-family:inherit;max-width:170px}
+.answ.sm{font-size:13px;padding:1px 6px;letter-spacing:.08em}
+.themelist{display:flex;flex-direction:column;gap:10px}
+.trow{flex-direction:row;align-items:center;gap:14px;flex-wrap:wrap}
+.trow .grow{flex:1;min-width:240px;display:flex;flex-direction:column;gap:4px}
+.trow.off{opacity:.6}
+.tname{height:38px;border-radius:9px;border:0;background:var(--panel2);font-size:16px;font-weight:600;padding:0 12px;color:var(--text);max-width:320px;font-family:inherit}
+.tgl{display:inline-flex;align-items:center;gap:8px;font-size:14px;cursor:pointer}
+.tgl input{width:20px;height:20px;accent-color:#FACC15}
+.hint.ok{color:#86EFAC}
+.field[hidden]{display:none}
+.dbt td.acts{white-space:nowrap;text-align:right}
+.dbt tr.gone td{opacity:.5}
+.dbt tr.gone td.acts{opacity:1}
+.tag{display:inline-block;font-size:10.5px;font-weight:600;background:#312E81;color:#C7D2FE;border-radius:4px;padding:1px 6px;margin-top:3px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.modalwrap{position:fixed;inset:0;background:rgba(5,6,14,.7);display:flex;align-items:center;justify-content:center;z-index:80;padding:20px}
+.modalwrap[hidden]{display:none}
+.modal{width:100%;max-width:760px;max-height:calc(100vh - 40px);overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.modal h2{font-size:20px;margin:0;color:var(--text);letter-spacing:0;text-transform:none}
+.mgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px}
+.mgrid .full{grid-column:1 / -1}
+.modal .field input[type=text]{height:42px}
+.modal .foot{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:14px}
+.modal .foot .grow{flex:1}
+.btn.danger.armed{background:#7F1D1D;color:#fff;box-shadow:none}
+.origin{font-size:12px;color:var(--muted);background:var(--panel2);border-radius:8px;padding:8px 10px;line-height:1.45}
+#adNewTheme .row{justify-content:flex-start}
+#adNewTheme .grow{flex:1;max-width:520px}
+.theme label small{display:block;font-size:11px;color:var(--muted)}
+.rolebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px;flex-basis:100%}
+.rolebar .seg{flex:1;max-width:420px}
+.defsbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+
+<!-- ===================== SALON ===================== -->
+<section class="screen on" id="scrLobby" aria-label="Salon">
+<div class="lobby">
+  <div>
+    <span class="eyebrow">Prototype PC · local</span>
+    <h1>Nouveau salon</h1>
+    <p class="sub">Les adversaires sont simulés pour tester le concept. Tout tourne dans ce fichier, sans serveur.</p>
+  </div>
+  <div class="card defsbar">
+    <div><h2>Définitions de la communauté</h2><p class="note" id="lDefsInfo" style="margin-top:6px"></p></div>
+    <div class="row" style="gap:8px">
+      <button class="btn" type="button" id="lPropose">Proposer une définition</button>
+      <button class="btn ghost" type="button" id="lModo">Modération</button>
+      <button class="btn ghost" type="button" id="lAdmin">Administration</button>
+    </div>
+    <div class="rolebar">
+      <span class="note">Profil de test :</span>
+      <div class="seg" role="group" aria-label="Profil de test" id="lRole"></div>
+      <span class="note">En production, le rôle viendra du compte et sera vérifié par le serveur.</span>
+    </div>
+  </div>
+  <div class="cols">
+    <div class="card">
+      <div class="codebox"><h2>Code du salon</h2><span class="code" id="lCode">----</span></div>
+      <div class="field">
+        <label for="lPseudo">Ton pseudo</label>
+        <input type="text" id="lPseudo" maxlength="12" value="Toi" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Adversaires simulés</label>
+        <div class="row">
+          <div class="bots" id="lBots"></div>
+          <div class="stepper">
+            <button type="button" id="lBotsMinus" aria-label="Retirer un adversaire">−</button>
+            <span id="lBotsN">3</span>
+            <button type="button" id="lBotsPlus" aria-label="Ajouter un adversaire">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label id="lSpeedLbl">Rapidité des adversaires</label>
+        <div class="seg" role="group" aria-labelledby="lSpeedLbl" id="lSpeed">
+          <button type="button" data-v="slow">Tranquille</button>
+          <button type="button" data-v="normal">Normale</button>
+          <button type="button" data-v="fast">Rapide</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Dosage des thèmes</h2>
+      <div id="lThemes" style="display:flex;flex-direction:column;gap:10px"></div>
+      <p class="note">Les pourcentages portent sur les mots pop culture. Les petits mots de remplissage ne comptent pas.</p>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Mode de jeu</h2>
+    <div class="seg" role="group" aria-label="Mode de jeu" id="lMode" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+      <button type="button" data-v="classic">Classique</button>
+      <button type="button" data-v="lastchance">Dernière chance</button>
+    </div>
+    <p class="note" id="lModeNote"></p>
+    <div class="field" id="lLastWrap" style="max-width:280px">
+      <label for="lLastTime">Temps pour la dernière tentative (secondes)</label>
+      <input type="number" id="lLastTime" min="5" max="120" step="5">
+    </div>
+  </div>
+  <div class="card">
+    <h2>Règles de score</h2>
+    <div class="rules">
+      <div class="field"><label for="lStartScore">Score de départ</label><input type="number" id="lStartScore" min="0" max="1000" step="10"></div>
+      <div class="field"><label for="lPenWord">Pénalité mot faux</label><input type="number" id="lPenWord" min="0" max="200" step="5"></div>
+      <div class="field"><label for="lPenMyst">Pénalité mot mystère faux</label><input type="number" id="lPenMyst" min="0" max="500" step="5"></div>
+    </div>
+    <p class="note">Tous les joueurs partent avec le même score, qui ne descend jamais sous zéro. Gains : 10 pts par lettre, ×2 si la définition est difficile, +20 mot vierge, +20 par jumelle, +100 mot mystère.</p>
+  </div>
+  <button class="btn primary" id="lStart" type="button" style="height:52px;font-size:17px">Créer la partie</button>
+</div>
+</section>
+
+<!-- ===================== JEU ===================== -->
+<section class="screen" id="scrGame" aria-label="Partie">
+<div class="game">
+  <div class="board" id="gBoard">
+    <div class="grid" id="gGrid" role="grid" aria-label="Grille de mots fléchés"></div>
+  </div>
+  <aside class="side">
+    <div class="top">
+      <div><span class="eyebrow">Salon privé</span><div class="c" id="gCode">Code ----</div></div>
+      <div class="timer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M9 2h6"/></svg><span id="gTimer">00:00</span></div>
+      <div class="menuwrap">
+        <button class="btn sm ghost" id="gMenuBtn" aria-expanded="false" type="button">Tests ▾</button>
+        <div class="menu" id="gMenu" hidden>
+          <span class="t">Raccourcis de test</span>
+          <button type="button" data-act="fill80">Remplir la grille à 80 %</button>
+          <button type="button" data-act="pause">Mettre les adversaires en pause</button>
+          <button type="button" data-act="finish">Terminer la partie</button>
+          <div class="sep"></div>
+          <button type="button" data-act="lobby">Retour au salon</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card finalbox" id="gFinal" hidden></div>
+    <div class="card"><h2>Scores</h2><div class="scores" id="gScores"></div></div>
+
+    <div class="card cluebox" id="gClue"></div>
+
+    <div class="card mcard" id="gMCard">
+      <div class="row"><h2>Mot mystère</h2><span class="note" id="gMPct">0 %</span></div>
+      <div class="mslots" id="gMSlots"></div>
+      <div class="prog" title="Ouverture à 80 %"><i id="gMBar" style="width:0%"></i><b></b></div>
+      <div id="gMAct"></div>
+      <p class="note" id="gMNote"></p>
+    </div>
+
+    <div class="card"><h2>Fil de la partie</h2><ul class="feed" id="gFeed"></ul></div>
+
+    <div class="card">
+      <h2>Légende</h2>
+      <div class="legend">
+        <span><span class="sw" style="background:#fff"><svg viewBox="0 0 24 24" width="18" height="18" style="fill:rgba(15,23,42,.35)" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.5L12 17.2 6.1 20.5l1.3-6.5L2.5 9.4l6.6-.8z"/></svg></span>Case jumelle ★</span>
+        <span><span class="sw" style="background:#fff"><svg viewBox="0 0 24 24" width="18" height="18" style="fill:rgba(15,23,42,.35)" aria-hidden="true"><path d="M12 1.5l9.5 10.5L12 22.5 2.5 12z"/></svg></span>Case jumelle ◆</span>
+        <span><span class="sw" style="background:#fff"><span style="position:absolute;inset:2px;border-radius:50%;border:2px solid var(--myst)"></span></span>Lettre du mot mystère</span>
+        <span><span class="sw" style="background:var(--hard)"></span>Définition difficile ×2</span>
+      </div>
+      <div class="keys"><kbd>A</kbd>–<kbd>Z</kbd> écrire · <kbd>Entrée</kbd> valider · <kbd>⌫</kbd> effacer<br><kbd>Tab</kbd> / <kbd>Maj+Tab</kbd> mot suivant / précédent · <kbd>Espace</kbd> changer de sens · <kbd>←</kbd> <kbd>→</kbd> déplacer le curseur<br><kbd>Échap</kbd> quitter la saisie du mot mystère</div>
+    </div>
+  </aside>
+</div>
+</section>
+
+<!-- ===================== ÉDITEUR DE DÉFINITIONS ===================== -->
+<section class="screen" id="scrEditor" aria-label="Proposer une définition">
+<div class="ed">
+  <div class="row" style="align-items:flex-end">
+    <div>
+      <span class="eyebrow">Définitions de la communauté</span>
+      <h1>Proposer une définition</h1>
+      <p class="sub">Ta définition passe en validation. Une fois validée, elle peut apparaître dans les grilles générées.</p>
+    </div>
+    <button class="btn ghost" type="button" data-go="lobby">‹ Retour au salon</button>
+  </div>
+  <div class="edcols">
+    <form class="card" id="edForm" autocomplete="off" novalidate>
+      <div class="field">
+        <label for="edAns">Réponse</label>
+        <input type="text" id="edAns" maxlength="24" placeholder="ex. Tolkien">
+        <span class="hint" id="edAnsHint"></span>
+      </div>
+      <div class="field">
+        <div class="row"><label for="edClue">Définition (texte de la case)</label><span class="count" id="edClueCount">0 / 40</span></div>
+        <input type="text" id="edClue" maxlength="40" placeholder="ex. Auteur du Seigneur des anneaux">
+        <span class="hint" id="edClueHint"></span>
+      </div>
+      <div class="field">
+        <label for="edTheme">Thème</label>
+        <select id="edTheme"></select>
+      </div>
+      <div class="field">
+        <label id="edDiffLbl">Difficulté</label>
+        <div class="seg seg4" role="group" aria-labelledby="edDiffLbl" id="edDiff"></div>
+        <span class="hint" id="edDiffHint"></span>
+      </div>
+      <div class="field">
+        <div class="row"><label for="edExpl">Explication</label><span class="count" id="edExplCount">0 / 280</span></div>
+        <textarea id="edExpl" maxlength="280" rows="4" placeholder="Pourquoi cette définition mène à la réponse. Elle sera montrée aux joueurs en fin de partie."></textarea>
+        <span class="hint" id="edExplHint"></span>
+      </div>
+      <div class="msg" id="edMsg" role="status"></div>
+      <button class="btn primary" type="submit" id="edSubmit">Envoyer en validation</button>
+    </form>
+    <div class="edside">
+      <div class="card">
+        <h2>Aperçu dans la grille</h2>
+        <div class="pv">
+          <figure><div class="pvcell" id="edPv1"></div><figcaption>Case seule</figcaption></figure>
+          <figure><div class="pvcell" id="edPv2"></div><figcaption>Case partagée</figcaption></figure>
+          <figure><div class="pvword" id="edPvWord"></div><figcaption>Réponse</figcaption></figure>
+        </div>
+        <p class="note" id="edPvNote">Une case peut porter deux définitions : vise un texte court qui reste lisible dans une case partagée.</p>
+      </div>
+      <div class="card">
+        <div class="row"><h2>Propositions envoyées</h2><span class="note" id="edMineCount"></span></div>
+        <div class="mine" id="edMine"></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ===================== MODÉRATION ===================== -->
+<section class="screen" id="scrModo" aria-label="Modération des définitions">
+<div class="ed">
+  <div class="row" style="align-items:flex-end">
+    <div>
+      <span class="eyebrow">Définitions de la communauté</span>
+      <h1>Modération</h1>
+      <p class="sub">Valide ou refuse les propositions. Seules les définitions validées entrent dans les grilles.</p>
+    </div>
+    <button class="btn ghost" type="button" data-go="lobby">‹ Retour au salon</button>
+  </div>
+  <div class="row">
+    <div class="seg" role="group" aria-label="Filtre" id="moFilter" style="flex:1;max-width:560px"></div>
+    <div class="row" style="gap:8px">
+      <button class="btn sm ghost" type="button" id="moExport">Exporter (JSON)</button>
+      <label class="btn sm ghost filebtn">Importer<input type="file" id="moImport" accept="application/json,.json" hidden></label>
+      <button class="btn sm ghost" type="button" id="moClear">Tout effacer</button>
+    </div>
+  </div>
+  <div class="molist" id="moList"></div>
+</div>
+</section>
+
+<!-- ===================== ADMINISTRATION ===================== -->
+<section class="screen" id="scrAdmin" aria-label="Administration">
+<div class="ed wide">
+  <div class="row" style="align-items:flex-end">
+    <div>
+      <span class="eyebrow">Réservé aux administrateurs</span>
+      <h1>Administration</h1>
+      <p class="sub">Toute la base de définitions, et la gestion des thèmes.</p>
+    </div>
+    <button class="btn ghost" type="button" data-go="lobby">‹ Retour au salon</button>
+  </div>
+  <div class="seg" role="group" aria-label="Section" id="adTabs" style="grid-template-columns:repeat(2,minmax(0,1fr));max-width:420px">
+    <button type="button" data-t="base">Base complète</button>
+    <button type="button" data-t="themes">Thèmes</button>
+  </div>
+
+  <div id="adBase">
+    <div class="card">
+      <div class="filters">
+        <label class="field grow"><span>Recherche</span><input type="text" id="adQ" placeholder="Réponse, définition, auteur…" autocomplete="off"></label>
+        <label class="field"><span>Thème</span><select id="adTheme"></select></label>
+        <label class="field"><span>Difficulté</span><select id="adDiff"></select></label>
+        <label class="field"><span>Source</span><select id="adSrc">
+          <option value="">Toutes</option><option value="builtin">Banque intégrée</option><option value="community">Communauté</option></select></label>
+        <label class="field"><span>Statut</span><select id="adStatus">
+          <option value="">Tous (hors supprimées)</option><option value="approved">Validée</option><option value="pending">En attente</option><option value="rejected">Refusée</option><option value="deleted">Supprimée</option><option value="all">Toutes, y compris supprimées</option></select></label>
+      </div>
+      <div class="row">
+        <span class="note" id="adCount"></span>
+        <button class="btn sm ghost" type="button" id="adCsv">Exporter la sélection (CSV)</button>
+      </div>
+    </div>
+    <div class="tablewrap">
+      <table class="dbt">
+        <thead><tr><th>Réponse</th><th>Définition</th><th>Thème</th><th>Difficulté</th><th>Source</th><th>Statut</th><th>Auteur</th><th><span class="sr">Actions</span></th></tr></thead>
+        <tbody id="adRows"></tbody>
+      </table>
+    </div>
+    <button class="btn ghost" type="button" id="adMore" hidden>Afficher plus</button>
+  </div>
+
+  <div id="adThemes" hidden>
+    <form class="card" id="adNewTheme" autocomplete="off">
+      <h2>Créer un thème</h2>
+      <div class="row" style="align-items:flex-end;gap:10px">
+        <label class="field grow"><span>Nom du thème</span><input type="text" id="adThemeName" maxlength="24" placeholder="ex. Séries TV, Mangas, Pubs cultes…"></label>
+        <button class="btn primary" type="submit">Créer le thème</button>
+      </div>
+      <span class="hint" id="adThemeMsg"></span>
+      <p class="note">Un nouveau thème démarre vide et à 0 % dans le salon. Il se remplit avec les propositions des joueurs, ou en y déplaçant des mots existants depuis la base complète.</p>
+    </form>
+    <div class="themelist" id="adThemeList"></div>
+  </div>
+</div>
+</section>
+
+<!-- ===================== ÉDITION D'UNE DÉFINITION (admin) ===================== -->
+<div class="modalwrap" id="emWrap" hidden>
+  <form class="modal" id="emForm" role="dialog" aria-modal="true" aria-labelledby="emTitle" autocomplete="off" novalidate>
+    <div class="row">
+      <h2 id="emTitle">Modifier la définition</h2>
+      <span class="note" id="emSrc"></span>
+    </div>
+    <div class="origin" id="emOrigin" hidden></div>
+    <div class="mgrid">
+      <div class="field">
+        <label for="emAns">Réponse</label>
+        <input type="text" id="emAns" maxlength="24">
+        <span class="hint" id="emAnsHint"></span>
+      </div>
+      <div class="field">
+        <label for="emTheme">Thème</label>
+        <select id="emTheme"></select>
+      </div>
+      <div class="field full">
+        <div class="row"><label for="emClue">Définition</label><span class="count" id="emClueCount">0 / 40</span></div>
+        <input type="text" id="emClue" maxlength="40">
+        <span class="hint" id="emClueHint"></span>
+      </div>
+      <div class="field">
+        <label for="emDiff">Difficulté</label>
+        <select id="emDiff"></select>
+      </div>
+      <div class="field" id="emStatusWrap">
+        <label for="emStatus">Statut</label>
+        <select id="emStatus">
+          <option value="pending">En attente</option>
+          <option value="approved">Validée</option>
+          <option value="rejected">Refusée</option>
+        </select>
+      </div>
+      <div class="field full">
+        <div class="row"><label for="emExpl">Explication</label><span class="count" id="emExplCount">0 / 280</span></div>
+        <textarea id="emExpl" maxlength="280" rows="3"></textarea>
+        <span class="hint" id="emExplHint"></span>
+      </div>
+    </div>
+    <div class="foot">
+      <button class="btn sm ghost danger" type="button" id="emDel">Supprimer</button>
+      <button class="btn sm ghost" type="button" id="emRevert" hidden>Revenir à l'original</button>
+      <span class="grow msg" id="emMsg" role="status"></span>
+      <button class="btn sm ghost" type="button" id="emCancel">Annuler</button>
+      <button class="btn sm primary" type="submit">Enregistrer</button>
+    </div>
+  </form>
+</div>
+
+<!-- ===================== RÉCAP ===================== -->
+<section class="screen" id="scrRecap" aria-label="Récapitulatif"><div class="recap" id="recap"></div></section>
+
+<div class="loading" id="loading" hidden>Génération de la grille…</div>
+
+<script>
+'use strict';
+const THEMES = [
+  { id: 'films',   label: 'Films' },
+  { id: 'anim',    label: 'Dessins animés' },
+  { id: 'jv',      label: 'Jeux vidéo' },
+  { id: 'musique', label: 'Musique' },
+  { id: 'persos',  label: 'Personnages' },
+  { id: 'sagas',   label: 'Sagas & lore' }
+];
+
+const BANK_RAW = [
+  // ---- Films
+  ['TITANIC','films',"Il a coulé, le film a cartonné"],
+  ['ROCKY','films',"Boxeur qui monte les marches de Philadelphie"],
+  ['RAMBO','films',"Bandeau rouge et couteau de survie"],
+  ['GOONIES','films',"Gamins sur la piste du trésor de Willy le Borgne"],
+  ['ALIEN','films',"Dans l'espace, personne ne vous entend crier"],
+  ['LEON','films',"Tueur à gages qui chouchoute sa plante verte"],
+  ['AMELIE','films',"Fabuleux destin à Montmartre"],
+  ['GHOST','films',"Poterie et fantôme amoureux"],
+  ['GREASE','films',"Danny et Sandy en blouson de cuir"],
+  ['TOPGUN','films',"Maverick y pilote un F-14"],
+  ['MATRIX','films',"Pilule rouge ou pilule bleue ?"],
+  ['SCREAM','films',"Masque blanc et coups de fil angoissants"],
+  ['JUMANJI','films',"Jeu de société qui déchaîne la jungle"],
+  ['TAXI','films',"Daniel y fonce en 406 dans Marseille"],
+  ['TERMINATOR','films',"Il avait promis de revenir"],
+  ['ROBOCOP','films',"Policier mi-homme mi-machine à Detroit"],
+  ['PREDATOR','films',"Chasseur invisible dans la jungle"],
+  ['ET','films',"Il voulait téléphoner maison"],
+  ['HOOK','films',"Capitaine crochu face à Peter Pan adulte"],
+  ['ABYSS','films',"Plongée chez des créatures des profondeurs",true],
+  ['SPEED','films',"Bus piégé à ne pas laisser sous 80 km/h"],
+  ['SEVEN','films',"Sept péchés et une boîte qu'on n'ouvre pas"],
+  ['TWISTER','films',"Chasseurs de tornades et vache volante"],
+  ['FORREST','films',"Cours, ..., cours !"],
+  ['GREMLINS','films',"Ne pas les nourrir après minuit"],
+  ['BEETHOVEN','films',"Saint-bernard baveux qui porte un nom de compositeur"],
+  ['MASK','films',"Visage vert et dents géantes avec Jim Carrey"],
+  ['WILLOW','films',"Petit sorcier qui protège un bébé",true],
+  // ---- Dessins animés
+  ['GOLDORAK','anim',"Robot géant venu d'Euphor"],
+  ['ALBATOR','anim',"Corsaire de l'espace balafré"],
+  ['CANDY','anim',"Orpheline aux couettes blondes"],
+  ['TOTORO','anim',"Gros esprit de la forêt chez Miyazaki"],
+  ['SIMBA','anim',"Lionceau promis au trône"],
+  ['ARIEL','anim',"Sirène qui rêvait de jambes"],
+  ['ALADDIN','anim',"Gamin des rues à la lampe magique"],
+  ['SHREK','anim',"Ogre vert qui se compare à un oignon"],
+  ['NEMO','anim',"Poisson-clown introuvable"],
+  ['DORAEMON','anim',"Chat-robot bleu venu du futur"],
+  ['OLIVE','anim',"Capitaine de foot, avec Tom"],
+  ['MUSCLOR','anim',"Par le pouvoir du crâne ancestral !"],
+  ['SKELETOR','anim',"Ennemi à tête de mort du héros de Grayskull"],
+  ['COBRA','anim',"Pirate au rire terrible et au bras armé",true],
+  ['ULYSSE','anim',"Il erre dans l'espace en 31",true],
+  ['GADGET','anim',"Inspecteur aux mille accessoires"],
+  ['PICSOU','anim',"Oncle canard qui plonge dans son or"],
+  ['CASPER','anim',"Gentil petit fantôme"],
+  ['GARFIELD','anim',"Chat orange fou de lasagnes"],
+  ['TITI','anim',"Canari qui croit avoir vu un gros minet"],
+  ['SANGOKU','anim',"Saiyan à la coiffure en pétard"],
+  ['VEGETA','anim',"Prince des Saiyans, rival éternel"],
+  ['SEIYA','anim',"Chevalier de Pégase"],
+  ['BULMA','anim',"Elle a inventé le détecteur de boules de cristal",true],
+  ['KRILIN','anim',"Petit chauve aux six points sur le front",true],
+  ['CLEMENTINE','anim',"Petite fille qui voyage en rêve avec Hippolyte, en 1985",true],
+  ['MULAN','anim',"Elle s'engage dans l'armée à la place de son père"],
+  ['TARZAN','anim',"Seigneur de la jungle version Disney 1999"],
+  ['HERCULE','anim',"Demi-dieu musclé chez Disney"],
+  ['DINGO','anim',"Grand ami maladroit de Mickey"],
+  ['SNOOPY','anim',"Beagle qui dort sur sa niche"],
+  ['ASTRO','anim',"Petit robot à réaction, héros d'Osamu Tezuka",true],
+  // ---- Jeux vidéo
+  ['MARIO','jv',"Plombier moustachu qui saute sur des tortues"],
+  ['LUIGI','jv',"Frère en vert, éternel second"],
+  ['SONIC','jv',"Hérisson bleu toujours pressé"],
+  ['TAILS','jv',"Renard à deux queues, ami du hérisson",true],
+  ['LINK','jv',"Héros d'Hyrule en tunique verte"],
+  ['ZELDA','jv',"Princesse qu'on confond avec le héros"],
+  ['TETRIS','jv',"Briques qui tombent, lignes qui disparaissent"],
+  ['PACMAN','jv',"Glouton jaune qui fuit des fantômes"],
+  ['YOSHI','jv',"Dinosaure vert à la langue collante"],
+  ['KIRBY','jv',"Boule rose qui avale tout"],
+  ['SAMUS','jv',"Chasseuse de primes en armure",true],
+  ['PIKACHU','jv',"Souris électrique jaune"],
+  ['LARA','jv',"Croft, pilleuse de tombes"],
+  ['RAYMAN','jv',"Héros sans bras ni jambes"],
+  ['CRASH','jv',"Bandicoot casse-cou"],
+  ['SPYRO','jv',"Petit dragon violet"],
+  ['DOOM','jv',"Il a fait trembler les PC en 1993"],
+  ['PONG','jv',"Deux raquettes, une balle : tout a commencé là"],
+  ['ATARI','jv',"Console pionnière au logo en trident"],
+  ['SEGA','jv',"Maison du hérisson bleu"],
+  ['GAMEBOY','jv',"Console portable grise des années 90"],
+  ['KONG','jv',"Donkey, gorille lanceur de tonneaux"],
+  ['WARIO','jv',"Double maléfique en jaune et violet"],
+  ['PEACH','jv',"Princesse toujours enlevée"],
+  ['BOWSER','jv',"Roi des Koopas"],
+  ['TOAD','jv',"Champignon qui annonce que la princesse est ailleurs"],
+  ['CLOUD','jv',"Mercenaire à l'épée démesurée de Final Fantasy VII"],
+  ['SIMS','jv',"On y parle simlish"],
+  ['MEGADRIVE','jv',"Console 16 bits de la maison du hérisson"],
+  ['LEMMINGS','jv',"Petites créatures suicidaires à sauver"],
+  // ---- Musique
+  ['MADONNA','musique',"Reine de la pop, comme une vierge"],
+  ['PRINCE','musique',"Sous une pluie violette"],
+  ['ABBA','musique',"Quatuor suédois de Waterloo"],
+  ['OASIS','musique',"Wonderwall, c'était eux"],
+  ['BLUR','musique',"Song 2 et ses woo-hoo"],
+  ['NIRVANA','musique',"Smells Like Teen Spirit"],
+  ['QUEEN','musique',"We Will Rock You"],
+  ['TOTO','musique',"Ils ont béni les pluies d'Afrique"],
+  ['EUROPE','musique',"Le compte à rebours final"],
+  ['ACDC','musique',"Autoroute pour l'enfer en 1979"],
+  ['KISS','musique',"Groupe maquillé en noir et blanc"],
+  ['WHAM','musique',"George Michael et Andrew, Last Christmas"],
+  ['STING','musique',"Voix de Police qui envoyait un SOS"],
+  ['AHA','musique',"Take On Me en 1985"],
+  ['MOBY','musique',"Porcelain et l'album Play"],
+  ['DAFTPUNK','musique',"Duo casqué, Around the World"],
+  ['INDOCHINE','musique',"L'aventurier, c'est eux"],
+  ['TELEPHONE','musique',"Un autre monde, en 1984"],
+  ['ALIZEE','musique',"Moi… Lolita"],
+  ['JORDY','musique',"Dur dur d'être bébé"],
+  ['RENAUD','musique',"Mistral gagnant"],
+  ['GOLDMAN','musique',"Il suffira d'un signe"],
+  ['BALAVOINE','musique',"L'Aziza"],
+  ['DOROTHEE','musique',"Chanteuse et présentatrice de son Club"],
+  ['MANAU','musique',"La tribu de Dana",true],
+  ['IAM','musique',"Je danse le mia"],
+  ['NTM','musique',"Suprême duo de Saint-Denis",true],
+  ['ROXETTE','musique',"Duo suédois de It Must Have Been Love"],
+  // ---- Personnages
+  ['MCFLY','persos',"Marty, voyageur temporel"],
+  ['DOC','persos',"Inventeur du convecteur temporel"],
+  ['ZORRO','persos',"Justicier masqué qui signe d'un Z"],
+  ['HULK','persos',"Colosse vert quand il s'énerve"],
+  ['BATMAN','persos',"Chevalier noir de Gotham"],
+  ['JOKER','persos',"Ennemi au sourire peint"],
+  ['ALF','persos',"Raffolait des chats… en ragoût",true],
+  ['NEO','persos',"L'Élu en pilule rouge"],
+  ['TRINITY','persos',"Pirate informatique en cuir noir de Matrix"],
+  ['MORPHEUS','persos',"Il propose la pilule rouge"],
+  ['RIPLEY','persos',"Elle affronte l'Alien"],
+  ['MACGYVER','persos',"Il répare tout avec un trombone"],
+  ['KITT','persos',"Voiture parlante de K 2000"],
+  ['URKEL','persos',"Steve, voisin envahissant de La Vie de famille",true],
+  ['BUFFY','persos',"Tueuse de vampires"],
+  ['MULDER','persos',"Agent du FBI qui veut croire"],
+  ['SCULLY','persos',"Sa collègue sceptique"],
+  ['HOMER','persos',"Père jaune qui dit D'oh !"],
+  ['BART','persos',"Ay caramba !"],
+  ['MARGE','persos',"Mère au chignon bleu"],
+  ['LISA','persos',"Petite saxophoniste de Springfield"],
+  ['KENNY','persos',"Oh mon Dieu, ils l'ont tué !"],
+  ['CARTMAN','persos',"Gamin insupportable de South Park"],
+  ['JOEY','persos',"How you doin' ?"],
+  ['ROSS','persos',"Paléontologue de Friends"],
+  ['RACHEL','persos',"Serveuse de Central Perk à la coupe culte"],
+  ['PHOEBE','persos',"Elle chante Smelly Cat"],
+  ['KEVIN','persos',"Seul à la maison"],
+  ['INDIANA','persos',"Jones, archéologue au fouet"],
+  ['LUPIN','persos',"Gentleman cambrioleur, version anime aussi"],
+  // ---- Sagas & lore
+  ['YODA','sagas',"Maître vert à la syntaxe inversée"],
+  ['VADOR','sagas',"Je suis ton père"],
+  ['LUKE','sagas',"Fils du précédent, fermier de Tatooine"],
+  ['LEIA','sagas',"Princesse aux macarons"],
+  ['HAN','sagas',"Solo, pilote du Faucon"],
+  ['SOLO','sagas',"Han, contrebandier"],
+  ['EWOK','sagas',"Petit ourson d'Endor"],
+  ['JEDI','sagas',"Chevalier au sabre laser"],
+  ['SITH','sagas',"Côté obscur de la Force"],
+  ['FRODO','sagas',"Porteur de l'Anneau"],
+  ['SAM','sagas',"Fidèle jardinier du porteur de l'Anneau"],
+  ['GOLLUM','sagas',"Mon précieux !"],
+  ['GANDALF','sagas',"Vous ne passerez pas !"],
+  ['ARAGORN','sagas',"Rôdeur devenu roi du Gondor"],
+  ['LEGOLAS','sagas',"Elfe archer de la Communauté"],
+  ['MORDOR','sagas',"On n'y entre pas si simplement",true],
+  ['SAURON','sagas',"Œil enflammé du Seigneur des ténèbres"],
+  ['HOBBIT','sagas',"Semi-homme aux pieds poilus"],
+  ['HARRY','sagas',"Sorcier à la cicatrice en éclair"],
+  ['POTTER','sagas',"Nom du garçon qui a survécu"],
+  ['HERMIONE','sagas',"Première de la classe à Poudlard"],
+  ['RON','sagas',"Meilleur ami roux du sorcier"],
+  ['DOBBY','sagas',"Elfe libéré par une chaussette"],
+  ['POUDLARD','sagas',"École de sorcellerie"],
+  ['HAGRID','sagas',"Garde-chasse demi-géant"],
+  ['SPOCK','sagas',"Longue vie et prospérité"],
+  ['KIRK','sagas',"Capitaine de l'Enterprise"],
+  ['TOLKIEN','sagas',"Auteur du Seigneur des anneaux"],
+  ['NARNIA','sagas',"Monde caché au fond d'une armoire"],
+  ['DUNE','sagas',"Planète des sables filmée par Lynch en 1984"],
+  ['ARRAKIS','sagas',"Autre nom de la planète des sables",true],
+  ['GRAAL','sagas',"Coupe que cherche Indiana Jones en 1989"],
+  // ---- Remplissage (mots courants)
+  ['ET','commun',"Conjonction de coordination"],
+  ['OU','commun',"Ceci ... cela"],
+  ['LE','commun',"Article masculin"],
+  ['LA','commun',"Note de musique ou article"],
+  ['UN','commun',"Premier nombre"],
+  ['IL','commun',"Pronom masculin"],
+  ['EN','commun',"Préposition ou pronom"],
+  ['OR','commun',"Métal précieux"],
+  ['AS','commun',"Champion ou carte maîtresse"],
+  ['SI','commun',"Note ou condition"],
+  ['NE','commun',"Moitié de négation"],
+  ['ON','commun',"Pronom indéfini"],
+  ['TU','commun',"On l'emploie entre amis"],
+  ['AU','commun',"Article contracté"],
+  ['MI','commun',"Note de musique"],
+  ['RE','commun',"Note de musique"],
+  ['DO','commun',"Première note de la gamme"],
+  ['NI','commun',"Ni oui ... non"],
+  ['SA','commun',"Possessif féminin"],
+  ['TA','commun',"Possessif, entre amis"],
+  ['ILE','commun',"Terre entourée d'eau"],
+  ['ROI','commun',"Il règne"],
+  ['AMI','commun',"Copain"],
+  ['EAU','commun',"Elle coule de source"],
+  ['ETE','commun',"Saison chaude"],
+  ['ANE','commun',"Il porte des bâts"],
+  ['RAT','commun',"Rongeur des villes"],
+  ['MER','commun',"Grande étendue salée"],
+  ['NID','commun',"Maison d'oiseau"],
+  ['ART','commun',"Le septième, c'est le cinéma"],
+  ['ERE','commun',"Époque"],
+  ['OSE','commun',"Audacieux"],
+  ['TAS','commun',"Amas"],
+  ['ARC','commun',"Arme de Robin des bois"],
+  ['ODE','commun',"Poème lyrique"],
+  ['USE','commun',"Abîmé à force de servir"],
+  ['SEL','commun',"Il relève les plats"],
+  ['TIR','commun',"Coup de fusil"],
+  ['RUE','commun',"Voie en ville"],
+  ['NUL','commun',"Zéro pointé"],
+  ['JEU','commun',"Partie de plaisir"],
+  ['VHS','commun',"Cassette d'avant le DVD"],
+  ['TELE','commun',"Petit écran"],
+  ['ROSE','commun',"Fleur ou couleur"],
+  ['RIRE','commun',"Éclat de joie"],
+  ['NOTE','commun',"Do, ré ou mi"],
+  ['AILE','commun',"Elle permet de voler"],
+  ['SORT','commun',"Formule magique"],
+  ['ETAT','commun',"Nation"],
+  ['TOUR','commun',"Pièce d'échecs"],
+  ['FILM','commun',"Long métrage"],
+  ['STAR','commun',"Vedette"],
+  ['TUBE','commun',"Succès musical"],
+  ['SAGA','commun',"Longue histoire en plusieurs épisodes"],
+  ['ARENE','commun',"Lieu de combat"],
+  ['SALON','commun',"Pièce à vivre"],
+  ['RETRO','commun',"D'une autre époque"],
+  ['HEROS','commun',"Personnage principal"],
+  ['CULTE','commun',"Adoré par les fans"],
+  ['DISCO','commun',"Danse sous la boule à facettes"],
+  ['PIXEL','commun',"Point d'écran"],
+  ['ANIME','commun',"Dessin animé japonais"],
+  ['MANGA','commun',"BD japonaise"],
+  ['ROBOT','commun',"Machine humanoïde"],
+  ['ETOILE','commun',"Elle brille la nuit"],
+  ['ESPACE','commun',"Ultime frontière"],
+  ['LASER','commun',"Rayon de sabre"],
+  ['RADIO','commun',"Poste à ondes"],
+  ['TONTON','commun',"Frère de papa"],
+  ['SOIREE','commun',"Fête du soir"],
+  ['ARCADE','commun',"Salle de bornes à pièces"],
+  ['MANETTE','commun',"Elle se tient à deux mains devant la console"],
+  ['CINEMA','commun',"Salle obscure"],
+  ['NOSTALGIE','commun',"C'était mieux avant"],
+  // ---- Remplissage supplémentaire (mots courants)
+  ['CE','commun',"Démonstratif"],
+  ['DU','commun',"Article partitif"],
+  ['ES','commun',"Tu ... là ?"],
+  ['EU','commun',"Participe passé d'avoir"],
+  ['MA','commun',"Possessif féminin"],
+  ['ME','commun',"Pronom personnel"],
+  ['NU','commun',"Sans vêtements"],
+  ['OS','commun',"Pièce du squelette"],
+  ['PU','commun',"Participe passé de pouvoir"],
+  ['RU','commun',"Petit ruisseau"],
+  ['SE','commun',"Pronom réfléchi"],
+  ['SU','commun',"Participe passé de savoir"],
+  ['TE','commun',"Pronom personnel"],
+  ['VA','commun',"Il ... et vient"],
+  ['VU','commun',"Participe passé de voir"],
+  ['LU','commun',"Participe passé de lire"],
+  ['BU','commun',"Participe passé de boire"],
+  ['DE','commun',"Préposition"],
+  ['AH','commun',"Exclamation de surprise"],
+  ['OH','commun',"Interjection d'étonnement"],
+  ['AN','commun',"Douze mois"],
+  ['IF','commun',"Conifère toxique"],
+  ['AI','commun',"Paresseux d'Amérique du Sud"],
+  ['OC','commun',"Langue d'... du Midi"],
+  ['EX','commun',"Ancien conjoint"],
+  ['MU','commun',"Lettre grecque"],
+  ['PI','commun',"Lettre grecque et nombre"],
+  ['UT','commun',"Ancien nom du do"],
+  ['AGE','commun',"Il compte les années"],
+  ['AIR','commun',"On le respire"],
+  ['ALE','commun',"Bière anglaise"],
+  ['AME','commun',"Esprit"],
+  ['ANS','commun',"Ils s'accumulent avec les bougies"],
+  ['ARE','commun',"Cent mètres carrés"],
+  ['BAL','commun',"Soirée dansante"],
+  ['BAR','commun',"Comptoir"],
+  ['BEC','commun',"Bouche d'oiseau"],
+  ['BLE','commun',"Céréale dorée"],
+  ['BOA','commun',"Serpent ou écharpe à plumes"],
+  ['BUS','commun',"Transport en commun"],
+  ['CAP','commun',"Promontoire"],
+  ['CRI','commun',"Appel sonore"],
+  ['DOS','commun',"Il porte le sac"],
+  ['DUO','commun',"Pour deux"],
+  ['ECU','commun',"Ancienne monnaie"],
+  ['ELU','commun',"Choisi par un vote"],
+  ['EPI','commun',"Tête de blé"],
+  ['FEE','commun',"Elle a une baguette"],
+  ['FER','commun',"Métal du forgeron"],
+  ['FIL','commun',"Il se coud"],
+  ['FIN','commun',"Mot de la dernière image"],
+  ['GAG','commun',"Effet comique"],
+  ['GEL','commun',"Froid ou produit coiffant"],
+  ['IRE','commun',"Colère"],
+  ['LAC','commun',"Plan d'eau"],
+  ['LIT','commun',"Meuble pour dormir"],
+  ['LOT','commun',"Part d'un tirage"],
+  ['MAI','commun',"Mois du muguet"],
+  ['MAL','commun',"Douleur"],
+  ['MAT','commun',"Échec et ..."],
+  ['MIE','commun',"Intérieur du pain"],
+  ['MOT','commun',"Unité de la grille"],
+  ['MUR','commun',"Cloison"],
+  ['NEZ','commun',"Organe de l'odorat"],
+  ['NIL','commun',"Fleuve d'Égypte"],
+  ['NOM','commun',"Patronyme"],
+  ['NUE','commun',"Sans vêtements, au féminin"],
+  ['OIE','commun',"Oiseau d'un jeu de société"],
+  ['OUI','commun',"Approbation"],
+  ['PAS','commun',"Enjambée"],
+  ['PIE','commun',"Oiseau bavard"],
+  ['POT','commun',"Récipient"],
+  ['RAS','commun',"Rien à signaler"],
+  ['RIZ','commun',"Céréale asiatique"],
+  ['ROC','commun',"Rocher"],
+  ['SAC','commun',"À dos ou à main"],
+  ['SEC','commun',"Pas mouillé"],
+  ['SOL','commun',"Note ou plancher"],
+  ['SUD','commun',"Point cardinal"],
+  ['TEE','commun',"Support de balle de golf"],
+  ['TOI','commun',"Pronom personnel"],
+  ['TON','commun',"Note ou nuance"],
+  ['TRI','commun',"Sélection"],
+  ['UNE','commun',"Première page"],
+  ['VIE','commun',"Existence"],
+  ['VIN','commun',"Il vieillit en cave"],
+  ['VOL','commun',"Trajet aérien"],
+  ['ZOO','commun',"Parc animalier"],
+  ['ETC','commun',"Et le reste"],
+  ['EST','commun',"Point cardinal"],
+  ['ARA','commun',"Perroquet coloré"],
+  ['AIL','commun',"Gousse au goût fort"],
+  ['OLE','commun',"Cri de corrida"],
+  ['ETA','commun',"Lettre grecque"],
+  ['NOE','commun',"Bâtisseur d'arche"],
+  ['ADO','commun',"Adolescent"],
+  ['TIC','commun',"Manie"],
+  ['TAC','commun',"Il répond au tic"],
+  ['SOU','commun',"Petite pièce"],
+  ['RAI','commun',"Rayon de lumière"],
+  ['NET','commun',"Propre, ou filet au tennis"],
+  ['LIS','commun',"Fleur royale"],
+  ['TRIO','commun',"Groupe de trois"],
+  ['AMIE','commun',"Copine"],
+  ['ANGE','commun',"Être ailé"],
+  ['ARME','commun',"Épée ou pistolet"],
+  ['AUTO','commun',"Voiture"],
+  ['AVIS','commun',"Opinion"],
+  ['BAIN','commun',"Moment dans la baignoire"],
+  ['BASE','commun',"Fondation"],
+  ['BETE','commun',"Animal"],
+  ['CAFE','commun',"Petit noir"],
+  ['CAGE','commun',"Prison d'oiseau"],
+  ['CIEL','commun',"Voûte bleue"],
+  ['CODE','commun',"Secret ou Konami"],
+  ['DAME','commun',"Pièce d'échecs"],
+  ['DATE','commun',"Jour et mois"],
+  ['DENT','commun',"Elle se brosse"],
+  ['DIRE','commun',"Parler"],
+  ['ELAN','commun',"Impulsion"],
+  ['EPEE','commun',"Arme de mousquetaire"],
+  ['ETRE','commun',"Exister"],
+  ['FETE','commun',"Célébration"],
+  ['FIER','commun',"Orgueilleux"],
+  ['GARE','commun',"Les trains y arrivent"],
+  ['IDEE','commun',"Elle germe"],
+  ['ILOT','commun',"Petite île"],
+  ['LAIT','commun',"Boisson blanche"],
+  ['LIRE','commun',"Parcourir un livre"],
+  ['LUNE','commun',"Satellite naturel"],
+  ['MAIN','commun',"Cinq doigts"],
+  ['MARE','commun',"Petit plan d'eau"],
+  ['MODE','commun',"Tendance"],
+  ['MORT','commun',"Fin de partie au jeu vidéo"],
+  ['NAIN','commun',"Ils étaient sept chez Blanche-Neige"],
+  ['NOEL','commun',"Fête du 25 décembre"],
+  ['NUIT','commun',"Contraire du jour"],
+  ['ONDE','commun',"Vague radio"],
+  ['ORAL','commun',"Examen parlé"],
+  ['OURS','commun',"Gros plantigrade"],
+  ['PAIN','commun',"Baguette"],
+  ['PILE','commun',"Côté d'une pièce"],
+  ['PION','commun',"Pièce de jeu"],
+  ['PNEU','commun',"Il se crève"],
+  ['RAME','commun',"Aviron"],
+  ['RARE','commun',"Peu courant"],
+  ['REVE','commun',"Voyage nocturne"],
+  ['RIEN','commun',"Néant"],
+  ['ROLE','commun',"Personnage joué"],
+  ['SANS','commun',"Dépourvu de"],
+  ['SIRE','commun',"Titre royal"],
+  ['SOIR','commun',"Fin de journée"],
+  ['SOLE','commun',"Poisson plat"],
+  ['TETE','commun',"Elle porte la casquette"],
+  ['TIRE','commun',"Il ... sur la corde"],
+  ['TOIT','commun',"Il couvre la maison"],
+  ['TROU','commun',"Cavité"],
+  ['URNE','commun',"Boîte de vote"],
+  ['VASE','commun',"Récipient à fleurs"],
+  ['VENT','commun',"Mistral ou tramontane"],
+  ['VERT','commun',"Couleur de l'espoir"],
+  ['ZERO','commun',"Pointé, c'est mauvais"],
+  ['AIDE','commun',"Assistance"],
+  ['ALLO','commun',"On le dit au téléphone"],
+  ['ARIA','commun',"Air d'opéra"],
+  ['AUBE','commun',"Lever du jour"],
+  ['BOIS','commun',"Forêt ou matériau"],
+  ['CRAN','commun',"Courage"],
+  ['DEMO','commun',"Version d'essai d'un jeu"],
+  ['DUEL','commun',"Combat à deux"],
+  ['ECHO','commun',"Son qui revient"],
+  ['EGAL','commun',"Identique"],
+  ['LIEU','commun',"Endroit"],
+  ['NAGE','commun',"Crawl ou brasse"],
+  ['NEON','commun',"Éclairage des enseignes"],
+  ['ORDI','commun',"PC, familièrement"],
+  ['PAGE','commun',"Feuille d'un livre"],
+  ['PERE','commun',"Papa"],
+  ['MERE','commun',"Maman"],
+  ['ROUE','commun',"Elle tourne"],
+  ['SEUL','commun',"Isolé"],
+  ['TOUT','commun',"L'ensemble"],
+  ['AMOUR','commun',"Sentiment tendre"],
+  ['ALBUM','commun',"Disque ou recueil de photos"],
+  ['ATOUT','commun',"Carte maîtresse"],
+  ['AVION','commun',"Il vole"],
+  ['BALLE','commun',"Elle rebondit"],
+  ['BANDE','commun',"Groupe d'amis"],
+  ['BOITE','commun',"Contenant ou discothèque"],
+  ['CARTE','commun',"À jouer ou au trésor"],
+  ['CHIEN','commun',"Meilleur ami de l'homme"],
+  ['CLONE','commun',"Copie conforme"],
+  ['CONTE','commun',"Il était une fois"],
+  ['COPIE','commun',"Reproduction"],
+  ['DANSE','commun',"Elle se fait sur la piste"],
+  ['DRAME','commun',"Tragédie"],
+  ['ECRAN','commun',"Petit ou grand, on le regarde"],
+  ['ENNUI','commun',"Lassitude"],
+  ['ETAPE','commun',"Partie d'un parcours"],
+  ['FABLE','commun',"Récit de La Fontaine"],
+  ['FORCE','commun',"Qu'elle soit avec toi"],
+  ['GENRE','commun',"Catégorie"],
+  ['GLACE','commun',"Miroir ou dessert"],
+  ['HEURE','commun',"Soixante minutes"],
+  ['IDOLE','commun',"Star adulée"],
+  ['IMAGE','commun',"Illustration"],
+  ['JOUER','commun',"S'amuser"],
+  ['LIVRE','commun',"Roman ou BD"],
+  ['MAGIE','commun',"Tour de passe-passe"],
+  ['METRO','commun',"Il roule sous la ville"],
+  ['MONDE','commun',"Planète entière"],
+  ['OCEAN','commun',"Atlantique ou Pacifique"],
+  ['OPERA','commun',"Spectacle chanté"],
+  ['ORAGE','commun',"Éclairs et tonnerre"],
+  ['PIANO','commun',"Instrument à touches"],
+  ['PLAGE','commun',"Sable et serviettes"],
+  ['POEME','commun',"Texte en vers"],
+  ['RADAR','commun',"Il flashe"],
+  ['REINE','commun',"Pièce d'échecs puissante"],
+  ['RIVAL','commun',"Adversaire"],
+  ['ROMAN','commun',"Long récit"],
+  ['SCENE','commun',"Planches du théâtre"],
+  ['SERIE','commun',"Suite d'épisodes"],
+  ['SIGNE','commun',"Indice ou zodiaque"],
+  ['SUITE','commun',"Épisode deux"],
+  ['TABLE','commun',"Meuble à manger"],
+  ['TEMPS','commun',"Il passe"],
+  ['TERRE','commun',"Notre planète"],
+  ['TITRE','commun',"Nom d'une œuvre"],
+  ['TRAIN','commun',"Il roule sur des rails"],
+  ['VILLE','commun',"Cité"],
+  ['ZEBRE','commun',"Cheval rayé"],
+  ['VIDEO','commun',"Clip ou cassette"],
+  ['ACTEUR','commun',"Il joue la comédie"],
+  ['AVATAR','commun',"Double numérique"],
+  ['BONBON','commun',"Douceur sucrée"],
+  ['CASQUE','commun',"Protection de tête"],
+  ['COMBAT','commun',"Affrontement"],
+  ['DESSIN','commun',"Croquis"],
+  ['ENIGME','commun',"Mystère à résoudre"],
+  ['JOUEUR','commun',"Participant"],
+  ['MIROIR','commun',"Il reflète"],
+  ['NIVEAU','commun',"Étape d'un jeu vidéo"],
+  ['RETOUR','commun',"... vers le futur"],
+  ['SECRET','commun',"Chut !"],
+  ['SOURIS','commun',"Rongeur ou périphérique"],
+  ['TRESOR','commun',"Coffre au butin"],
+  ['VOYAGE','commun',"Périple"],
+  ['MAGNETO','commun',"Lecteur de cassettes"],
+  ['CLAVIER','commun',"Ensemble de touches"],
+  ['GUITARE','commun',"Instrument à six cordes"],
+  ['PLANETE','commun',"Elle tourne autour d'une étoile"],
+  ['VAMPIRE','commun',"Il craint l'ail"]
+];
+
+const BANK = BANK_RAW.map(([ans, theme, clue, hard]) => ({ ans, theme, clue, hard: !!hard }));
+
+/* =====================================================================
+   GÉNÉRATEUR DE GRILLE (mots fléchés, 10 colonnes × 13 rangées)
+   ===================================================================== */
+const R = 13, C = 10;
+const FILLER_W = 4;
+
+function weightedOrder(items, wfn) {
+  return items
+    .map(it => { const w = wfn(it); return { it, k: w > 0 ? -Math.log(Math.random()) / w : Infinity }; })
+    .filter(x => x.k !== Infinity)
+    .sort((a, b) => a.k - b.k)
+    .map(x => x.it);
+}
+
+// Emplacements de définition dans une case :
+//  r  = mot horizontal qui commence à droite de la case
+//  d  = mot vertical qui commence sous la case
+//  rd = flèche coudée → puis ↓ : mot vertical qui commence à droite (1re rangée)
+//  dr = flèche coudée ↓ puis → : mot horizontal qui commence dessous (1re colonne)
+const SLOTS = ['r', 'd', 'rd', 'dr'];
+function clueSlots(x) {
+  if (!x || x.t !== 'D') return [];
+  return SLOTS.filter(s => x[s] != null).map(s => [s, x[s]]);
+}
+
+function buildOnce(bank, weights) {
+  const cells = new Array(R * C).fill(null);
+  const words = [];
+  const used = new Set();
+  const at = (r, c) => (r < 0 || c < 0 || r >= R || c >= C) ? undefined : cells[r * C + c];
+  // les définitions de la communauté sont favorisées (×3) pour qu'on les voie vite en test
+  const order = weightedOrder(bank, w => (w.theme === 'commun' ? FILLER_W : (weights[w.theme] || 0)) * (w.user ? 3 : 1));
+  const byAns = new Map();
+  for (const w of order) if (!byAns.has(w.ans)) byAns.set(w.ans, w);
+  const newD = () => ({ t: 'D', r: null, d: null, rd: null, dr: null });
+
+  function slotFree(pr, pc, slot) {
+    if (pr < 0 || pc < 0 || pr >= R || pc >= C) return false;
+    const d = at(pr, pc);
+    if (!d) return true;
+    if (d.t !== 'D' || d[slot] != null) return false;
+    return clueSlots(d).length < 2; // deux définitions maximum par case
+  }
+  // où placer la définition d'un mot qui commence en (r, c) ? → [ligne, colonne, emplacement] ou null
+  function defFor(r, c, dir) {
+    if (dir === 'h') {
+      if (c > 0) return slotFree(r, c - 1, 'r') ? [r, c - 1, 'r'] : null;
+      return (r > 0 && slotFree(r - 1, 0, 'dr')) ? [r - 1, 0, 'dr'] : null;
+    }
+    if (r > 0) return slotFree(r - 1, c, 'd') ? [r - 1, c, 'd'] : null;
+    return (c > 0 && slotFree(0, c - 1, 'rd')) ? [0, c - 1, 'rd'] : null;
+  }
+  function endOk(er, ec) {
+    if (er >= R || ec >= C) return true;
+    const e = at(er, ec);
+    return !(e && e.t === 'L');
+  }
+
+  // Les lettres peuvent toucher des lettres voisines, à condition que chaque nouvelle suite
+  // de lettres ainsi formée soit elle-même un mot de la banque (qui reçoit sa définition).
+  function check(ans, r, c, dir) {
+    const dr = dir === 'v' ? 1 : 0, dc = dir === 'h' ? 1 : 0, n = ans.length;
+    const pdir = dir === 'h' ? 'v' : 'h', pr = dc, pc = dr;
+    if (r < 0 || c < 0 || r + dr * (n - 1) >= R || c + dc * (n - 1) >= C) return null;
+    const def = defFor(r, c, dir);
+    if (!def) return null;
+    if (!endOk(r + dr * n, c + dc * n)) return null;
+    let cross = 0;
+    const fresh = [], freshSet = new Set();
+    for (let i = 0; i < n; i++) {
+      const rr = r + dr * i, cc = c + dc * i, x = at(rr, cc);
+      if (x) {
+        if (x.t !== 'L' || x.ch !== ans[i]) return null;
+        if (dir === 'h' ? x.h != null : x.v != null) return null;
+        cross++;
+      } else { fresh.push(i); freshSet.add(rr * C + cc); }
+    }
+    if (cross === n) return null;
+    if (freshSet.has(def[0] * C + def[1])) return null;
+    const extra = [], pend = new Set([ans]);
+    const pendDef = new Map([[def[0] * C + def[1], [def[2]]]]); // définitions ajoutées par ce placement
+    for (const i of fresh) {
+      const rr = r + dr * i, cc = c + dc * i;
+      let a = 0, b = 0;
+      while (true) { const y = at(rr - pr * (a + 1), cc - pc * (a + 1)); if (y && y.t === 'L') a++; else break; }
+      while (true) { const y = at(rr + pr * (b + 1), cc + pc * (b + 1)); if (y && y.t === 'L') b++; else break; }
+      if (a === 0 && b === 0) continue;
+      let str = '';
+      for (let j = -a; j <= b; j++) {
+        if (j === 0) { str += ans[i]; continue; }
+        const y = at(rr + pr * j, cc + pc * j);
+        if (pdir === 'h' ? y.h != null : y.v != null) return null;
+        str += y.ch;
+      }
+      const ew = byAns.get(str);
+      if (!ew || used.has(str) || pend.has(str)) return null;
+      const sr = rr - pr * a, sc = cc - pc * a;
+      const ed = defFor(sr, sc, pdir);
+      if (!ed || freshSet.has(ed[0] * C + ed[1])) return null;
+      const dk = ed[0] * C + ed[1], prev = pendDef.get(dk) || [];
+      if (prev.includes(ed[2]) || clueSlots(at(ed[0], ed[1])).length + prev.length >= 2) return null;
+      const er = sr + pr * str.length, ec = sc + pc * str.length;
+      if (!endOk(er, ec) || (er < R && ec < C && freshSet.has(er * C + ec))) return null;
+      pend.add(str); pendDef.set(dk, prev.concat(ed[2]));
+      extra.push({ w: ew, r: sr, c: sc, dir: pdir });
+    }
+    if (words.length && cross === 0 && !extra.length) return null;
+    return { cross, extra };
+  }
+
+  function place(w, r, c, dir) {
+    const def = defFor(r, c, dir);
+    if (!def) return false;
+    const idx = words.length;
+    const dr = dir === 'v' ? 1 : 0, dc = dir === 'h' ? 1 : 0, n = w.ans.length;
+    const pk = def[0] * C + def[1];
+    if (!cells[pk]) cells[pk] = newD();
+    cells[pk][def[2]] = idx;
+    const list = [];
+    for (let i = 0; i < n; i++) {
+      const k = (r + dr * i) * C + (c + dc * i);
+      if (!cells[k]) cells[k] = { t: 'L', ch: w.ans[i], h: null, v: null };
+      if (dir === 'h') cells[k].h = idx; else cells[k].v = idx;
+      list.push(k);
+    }
+    const er = r + dr * n, ec = c + dc * n;
+    if (er < R && ec < C && !cells[er * C + ec]) cells[er * C + ec] = newD();
+    words.push({ ans: w.ans, theme: w.theme, clue: w.clue, hard: w.hard, diff: w.diff, expl: w.expl, author: w.author, user: !!w.user, r, c, dir, cells: list, def: pk, slot: def[2] });
+    used.add(w.ans);
+    return true;
+  }
+
+  // premier mot : un mot pop culture de 5 à 9 lettres
+  const first = order.find(w => w.theme !== 'commun' && w.ans.length >= 5 && w.ans.length <= 9);
+  if (!first) return null;
+  if (Math.random() < 0.5) {
+    place(first, 1 + Math.floor(Math.random() * (R - 2)), 1 + Math.floor(Math.random() * (C - first.ans.length)), 'h');
+  } else {
+    place(first, 1 + Math.floor(Math.random() * (R - first.ans.length)), 1 + Math.floor(Math.random() * (C - 1)), 'v');
+  }
+
+  // anchors=false : le mot doit croiser une lettre existante ;
+  // anchors=true  : on essaie aussi les positions qui bouchent un trou voisin d'une lettre.
+  function runPass(list, anchors) {
+    let progress = true;
+    while (progress) {
+      progress = false;
+      for (const w of list) {
+        if (used.has(w.ans)) continue;
+        let best = [], bestS = 0;
+        const tryAt = (r, c, dir) => {
+          const res = check(w.ans, r, c, dir);
+          if (!res) return;
+          const sc = res.cross * 2 + res.extra.length * 3 + (w.theme !== 'commun' ? 2 : 0) + w.ans.length * 0.5;
+          if (sc > bestS) { bestS = sc; best = [[r, c, dir, res.extra]]; }
+          else if (sc === bestS) best.push([r, c, dir, res.extra]);
+        };
+        for (let k = 0; k < R * C; k++) {
+          const x = cells[k];
+          const r0 = Math.floor(k / C), c0 = k % C;
+          if (x && x.t === 'L') {
+            for (let i = 0; i < w.ans.length; i++) {
+              if (w.ans[i] !== x.ch) continue;
+              if (x.h == null) tryAt(r0, c0 - i, 'h');
+              if (x.v == null) tryAt(r0 - i, c0, 'v');
+            }
+          } else if (anchors && !x) {
+            const nb = [at(r0 - 1, c0), at(r0 + 1, c0), at(r0, c0 - 1), at(r0, c0 + 1)];
+            if (!nb.some(y => y && y.t === 'L')) continue;
+            for (let i = 0; i < w.ans.length; i++) { tryAt(r0, c0 - i, 'h'); tryAt(r0 - i, c0, 'v'); }
+          }
+        }
+        if (best.length) {
+          const [r, c, dir, extra] = best[Math.floor(Math.random() * best.length)];
+          place(w, r, c, dir);
+          extra.forEach(e => place(e.w, e.r, e.c, e.dir));
+          progress = true;
+        }
+      }
+    }
+  }
+  runPass(order.filter(w => w.theme !== 'commun'), false);  // 1. la pop culture d'abord
+  runPass(order, false);                                     // 2. tout, en croisement
+  runPass(order, true);                                      // 3. bouche-trous
+
+  for (let k = 0; k < R * C; k++) if (!cells[k]) cells[k] = newD();
+  const letters = cells.filter(x => x.t === 'L').length;
+  const fillers = cells.filter(x => x.t === 'D' && !clueSlots(x).length).length;
+  const pop = words.filter(w => w.theme !== 'commun').length;
+  return { cells, words, letters, score: letters * 2 - fillers * 2 + pop * 3 };
+}
+
+function generateGrid(bank, weights, attempts) {
+  let best = null;
+  for (let a = 0; a < attempts; a++) {
+    const g = buildOnce(bank, weights);
+    if (g && (!best || g.score > best.score)) best = g;
+  }
+  return best;
+}
+
+function letterCells(g) {
+  const out = [];
+  g.cells.forEach((x, k) => { if (x.t === 'L') out.push(k); });
+  return out;
+}
+
+function pickMystery(g, bank, weights) {
+  const used = new Set(g.words.map(w => w.ans));
+  const L = letterCells(g);
+  const cand = weightedOrder(
+    bank.filter(w => w.theme !== 'commun' && !used.has(w.ans) && w.ans.length >= 5 && w.ans.length <= 9),
+    w => weights[w.theme] || 0
+  );
+  for (const m of cand) {
+    const taken = new Set(), pos = [];
+    let ok = true;
+    for (const ch of m.ans) {
+      const opts = L.filter(k => g.cells[k].ch === ch && !taken.has(k));
+      if (!opts.length) { ok = false; break; }
+      const k = opts[Math.floor(Math.random() * opts.length)];
+      taken.add(k); pos.push(k);
+    }
+    if (ok) return { ans: m.ans, clue: m.clue, theme: m.theme, cells: pos };
+  }
+  return null;
+}
+
+function pickTwins(g, myst) {
+  const blocked = new Set(myst ? myst.cells : []);
+  const L = letterCells(g).filter(k => !blocked.has(k));
+  const wordsOf = k => [g.cells[k].h, g.cells[k].v].filter(x => x != null);
+  const pairs = [], used = new Set();
+  for (let p = 0; p < 2; p++) {
+    for (let t = 0; t < 400; t++) {
+      const a = L[Math.floor(Math.random() * L.length)], b = L[Math.floor(Math.random() * L.length)];
+      if (a === b || used.has(a) || used.has(b)) continue;
+      const wa = wordsOf(a), wb = wordsOf(b);
+      if (wa.some(x => wb.includes(x))) continue;
+      const dist = Math.abs(Math.floor(a / C) - Math.floor(b / C)) + Math.abs(a % C - b % C);
+      if (dist < 4) continue;
+      pairs.push([a, b]); used.add(a); used.add(b);
+      break;
+    }
+  }
+  return pairs; // paire 0 = jaune, paire 1 = noire
+}
+
+/* =====================================================================
+   RÈGLES DE SCORE
+   ===================================================================== */
+const PTS_LETTER = 10, HARD_MULT = 2, BONUS_VIERGE = 20, PRIME_TWIN = 20, BONUS_MYST = 100, MYST_THRESHOLD = 80;
+const wordBase = w => w.ans.length * PTS_LETTER * (w.hard ? HARD_MULT : 1);
+const TWIN_SYM = ['★', '◆'];
+const SVG_STAR = '<path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.5L12 17.2 6.1 20.5l1.3-6.5L2.5 9.4l6.6-.8z"/>';
+const SVG_DIAMOND = '<path d="M12 1.5l9.5 10.5L12 22.5 2.5 12z"/>';
+const wmSvg = pair => `<svg class="wm" viewBox="0 0 24 24" aria-hidden="true">${pair === 0 ? SVG_STAR : SVG_DIAMOND}</svg>`;
+
+/* =====================================================================
+   ÉTAT
+   ===================================================================== */
+// 8 joueurs maximum (toi + 7 adversaires simulés). Couleurs choisies pour rester distinctes
+// entre elles et ne pas se confondre avec la sélection (jaune), les erreurs (rouge) ni les cases de définition (beige).
+const MAX_PLAYERS = 8;
+const PALETTE = [
+  { color: '#1D4ED8', tint: '#DBEAFE' },  // bleu (toi)
+  { color: '#C2410C', tint: '#FFEDD5' },  // orange
+  { color: '#15803D', tint: '#DCFCE7' },  // vert
+  { color: '#BE185D', tint: '#FCE7F3' },  // magenta
+  { color: '#6D28D9', tint: '#EDE9FE' },  // violet
+  { color: '#0F766E', tint: '#CCFBF1' },  // turquoise
+  { color: '#111827', tint: '#E5E7EB' },  // graphite
+  { color: '#4D7C0F', tint: '#ECFCCB' }   // olive
+];
+const BOT_NAMES = ['Léa', 'Marc', 'Sophie', 'Karim', 'Julie', 'Tom', 'Inès'];
+const SPEEDS = { slow: [14000, 26000], normal: [8000, 16000], fast: [4000, 9000] };
+const settings = {
+  pseudo: 'Toi', bots: 3, speed: 'normal',
+  startScore: 100, penWord: 10, penMyst: 30,
+  gameMode: 'classic', lastTime: 20,
+  weights: { films: 20, anim: 20, jv: 15, musique: 15, persos: 15, sagas: 15 }
+};
+let G = null, S = null, roomCode = makeCode();
+
+function makeCode() {
+  const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let s = '';
+  for (let i = 0; i < 4; i++) s += A[Math.floor(Math.random() * A.length)];
+  return s;
+}
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmtTime = ms => { const s = Math.floor(ms / 1000); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
+
+/* =====================================================================
+   SALON
+   ===================================================================== */
+function displayPercents() {
+  const keys = THEMES.map(t => t.id);
+  const raw = keys.map(k => settings.weights[k]);
+  const floors = raw.map(Math.floor);
+  let rest = 100 - floors.reduce((a, b) => a + b, 0);
+  const order = raw.map((v, i) => [v - Math.floor(v), i]).sort((a, b) => b[0] - a[0]);
+  for (let j = 0; j < order.length && rest > 0; j++, rest--) floors[order[j][1]]++;
+  const out = {};
+  keys.forEach((k, i) => out[k] = floors[i]);
+  return out;
+}
+function setTheme(id, v) {
+  const keys = THEMES.map(t => t.id).filter(k => k !== id);
+  const rest = 100 - v;
+  const sumO = keys.reduce((s, k) => s + settings.weights[k], 0);
+  keys.forEach(k => { settings.weights[k] = sumO > 0 ? settings.weights[k] * rest / sumO : rest / keys.length; });
+  settings.weights[id] = v;
+  renderLobby();
+}
+function renderLobby() {
+  $('#lCode').textContent = roomCode;
+  $('#lBotsN').textContent = settings.bots;
+  $('#lBots').innerHTML = BOT_NAMES.slice(0, settings.bots)
+    .map((n, i) => `<span class="pill"><span class="dot" style="background:${PALETTE[i + 1].color}"></span>${n}</span>`).join('');
+  document.querySelectorAll('#lSpeed button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === settings.speed)));
+  [['#lStartScore', 'startScore'], ['#lPenWord', 'penWord'], ['#lPenMyst', 'penMyst'], ['#lLastTime', 'lastTime']].forEach(([sel, key]) => {
+    if (document.activeElement !== $(sel)) $(sel).value = settings[key];
+  });
+  document.querySelectorAll('#lMode button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === settings.gameMode)));
+  $('#lModeNote').textContent = settings.gameMode === 'classic'
+    ? 'La partie se termine quand la grille est entièrement remplie.'
+    : 'Dès qu\u2019un joueur trouve le mot mystère, chaque autre joueur a droit à une dernière tentative (un mot de la grille ou le mot mystère), puis la partie s\u2019arrête.';
+  $('#lLastWrap').hidden = settings.gameMode !== 'lastchance';
+  const disp = displayPercents();
+  THEMES.forEach(t => {
+    const inp = $('#th_' + t.id);
+    if (document.activeElement !== inp) inp.value = disp[t.id];
+    $('#tho_' + t.id).textContent = disp[t.id] + ' %';
+  });
+}
+function initLobby() {
+  buildThemeSliders();
+  $('#lBotsMinus').onclick = () => { settings.bots = Math.max(1, settings.bots - 1); renderLobby(); };
+  $('#lBotsPlus').onclick = () => { settings.bots = Math.min(MAX_PLAYERS - 1, settings.bots + 1); renderLobby(); };
+  document.querySelectorAll('#lSpeed button').forEach(b => b.onclick = () => { settings.speed = b.dataset.v; renderLobby(); });
+  $('#lPseudo').addEventListener('input', e => { settings.pseudo = e.target.value.trim() || 'Toi'; });
+  document.querySelectorAll('#lMode button').forEach(b => b.onclick = () => { settings.gameMode = b.dataset.v; renderLobby(); });
+  $('#lLastTime').addEventListener('input', e => { settings.lastTime = Math.max(5, parseInt(e.target.value, 10) || 20); });
+  $('#lLastTime').addEventListener('blur', renderLobby);
+  [['#lStartScore', 'startScore'], ['#lPenWord', 'penWord'], ['#lPenMyst', 'penMyst']].forEach(([sel, key]) => {
+    $(sel).addEventListener('input', e => { settings[key] = Math.max(0, parseInt(e.target.value, 10) || 0); });
+    $(sel).addEventListener('blur', renderLobby);
+  });
+  $('#lStart').onclick = startGame;
+  renderLobby();
+}
+function show(id) { ['#scrLobby', '#scrGame', '#scrRecap', '#scrEditor', '#scrModo', '#scrAdmin'].forEach(s => $(s).classList.toggle('on', s === id)); }
+
+/* =====================================================================
+   PARTIE
+   ===================================================================== */
+function startGame() {
+  $('#loading').hidden = false;
+  setTimeout(() => {
+    const bank = currentBank();
+    let g = null, myst = null;
+    for (let i = 0; i < 4 && !myst; i++) {
+      g = generateGrid(bank, settings.weights, 30);
+      myst = g ? pickMystery(g, bank, settings.weights) : null;
+    }
+    const twins = pickTwins(g, myst);
+    G = { ...g, myst, twins, twinOf: {}, mystIdx: {}, letters: letterCells(g) };
+    twins.forEach((p, i) => { G.twinOf[p[0]] = { pair: i, partner: p[1] }; G.twinOf[p[1]] = { pair: i, partner: p[0] }; });
+    if (myst) myst.cells.forEach((k, i) => G.mystIdx[k] = i + 1);
+    G.orderIdx = G.words.map((w, i) => i).sort((a, b) => G.words[a].def - G.words[b].def || (G.words[a].dir === 'h' ? -1 : 1));
+
+    const players = [{ id: 'me', name: settings.pseudo, bot: false, ...PALETTE[0] }]
+      .concat(BOT_NAMES.slice(0, settings.bots).map((n, i) => ({ id: 'b' + i, name: n, bot: true, ...PALETTE[i + 1] })));
+    const P = {}, stats = {};
+    players.forEach(p => { P[p.id] = p; stats[p.id] = { mGuess: '', score: settings.startScore, start: settings.startScore, pen: 0, penN: 0, words: 0, wordPts: 0, vierge: 0, twins: 0, combos: 0, comboPts: 0, mystery: 0, mAttempt: false, mOk: false }; });
+    S = {
+      P, players, stats,
+      fill: new Array(R * C).fill(null),
+      found: new Array(G.words.length).fill(null),
+      sel: { w: null, typed: {}, cursor: null },
+      mode: 'grid', mTyped: [],
+      startedAt: Date.now(), endedAt: null, over: false, paused: false,
+      lastTry: 0, flash: {}, bump: {}, feed: [],
+      final: null, review: false, endReason: '', how: []
+    };
+    const now = Date.now();
+    players.filter(p => p.bot).forEach(p => p.nextAt = now + 3000 + botDelay());
+    $('#gCode').textContent = 'Code ' + roomCode;
+    document.querySelector('#gMenu [data-act=pause]').textContent = 'Mettre les adversaires en pause';
+    closeMenu();
+    $('#gMenuBtn').hidden = false;
+    buildGridDom();
+    selectNext(0);
+    log(`Partie lancée : ${G.words.length} mots à trouver. Mode ${settings.gameMode === 'classic' ? 'classique' : 'dernière chance'}.`);
+    $('#loading').hidden = true;
+    show('#scrGame');
+    fitGrid();
+    render();
+  }, 30);
+}
+
+function botDelay() { const [a, b] = SPEEDS[settings.speed]; return a + Math.random() * (b - a); }
+function fillPct() {
+  if (!G) return 0;
+  return Math.round(G.letters.filter(k => S.fill[k] != null).length / G.letters.length * 100);
+}
+function addScore(pid, n) { S.stats[pid].score += n; S.bump[pid] = Date.now(); }
+function penalize(pid, n) {
+  const st = S.stats[pid];
+  const lost = Math.min(n, st.score); // le score ne descend pas sous zéro
+  st.score -= lost; st.pen += lost; st.penN++;
+  S.bump[pid] = Date.now();
+  return lost;
+}
+
+function claimWord(wi, pid) {
+  const w = G.words[wi];
+  if (S.found[wi] != null) return [];
+  const st = S.stats[pid], name = S.P[pid].name;
+  const pre = w.cells.filter(k => S.fill[k] != null).length;
+  const base = wordBase(w), vierge = pre === 0;
+  S.found[wi] = pid;
+  S.how[wi] = 'trouvé';
+  st.words++; st.wordPts += base; addScore(pid, base);
+  if (vierge) { st.vierge += BONUS_VIERGE; addScore(pid, BONUS_VIERGE); }
+  const msgs = [`${name} trouve ${w.ans} +${base}${vierge ? ' · vierge +' + BONUS_VIERGE : ''}`];
+  const newly = [];
+  w.cells.forEach(k => { if (S.fill[k] == null) { S.fill[k] = pid; newly.push(k); } });
+  const twinNew = [];
+  newly.forEach(k => {
+    const t = G.twinOf[k];
+    if (t && S.fill[t.partner] == null) {
+      S.fill[t.partner] = pid; twinNew.push(t.partner);
+      st.twins += PRIME_TWIN; addScore(pid, PRIME_TWIN);
+      msgs.push(`jumelle ${TWIN_SYM[t.pair]} révélée +${PRIME_TWIN}`);
+    }
+  });
+  G.words.forEach((w2, j) => {
+    if (S.found[j] == null && w2.cells.every(k => S.fill[k] != null)) {
+      S.found[j] = pid;
+      S.how[j] = w2.cells.some(k => twinNew.includes(k)) ? 'combo jumelle' : 'croisement';
+      const b = wordBase(w2);
+      st.combos++; st.comboPts += b; addScore(pid, b);
+      msgs.push(`${w2.cells.some(k => twinNew.includes(k)) ? 'combo' : 'croisement'} ${w2.ans} +${b}`);
+    }
+  });
+  const t = Date.now();
+  newly.concat(twinNew).forEach(k => S.flash[k] = t);
+  setTimeout(render, 650);
+  cleanTyped();
+  checkEnd();
+  return msgs;
+}
+
+function cleanTyped() {
+  if (S.sel.w != null && S.found[S.sel.w] != null) S.sel = { w: null, typed: {}, cursor: null };
+}
+function checkEnd() { if (!S.over && G.letters.every(k => S.fill[k] != null)) finishGame('Grille complète.'); }
+function finishGame(reason) {
+  if (S.over) return;
+  S.over = true; S.endedAt = Date.now();
+  S.endReason = reason || '';
+  S.mode = 'grid';
+  closeMenu();
+  render();
+  setTimeout(() => { renderRecap(); show('#scrRecap'); }, 1100);
+}
+
+/* ---------------- Mode « dernière chance » ---------------- */
+// Dès qu'un joueur trouve le mot mystère, chaque autre joueur a droit à UNE tentative
+// (un mot de la grille ou le mot mystère), avec un compte à rebours, puis la partie s'arrête.
+function startFinal(by) {
+  if (settings.gameMode !== 'lastchance' || S.final || S.over) return;
+  const pending = new Set(S.players.filter(p => p.id !== by).map(p => p.id));
+  const now = Date.now();
+  S.final = { by, endsAt: now + settings.lastTime * 1000, pending };
+  log(`${S.P[by].name} a trouvé le mot mystère : dernière tentative pour les autres (${settings.lastTime} s) !`, by);
+  S.players.forEach(p => { if (p.bot) p.finalAt = now + 1500 + Math.random() * Math.min(9000, settings.lastTime * 600); });
+  if (!pending.size) finishGame(`${S.P[by].name} a trouvé le mot mystère.`);
+  else if (pending.has('me')) notice('Dernière tentative ! Un seul essai : un mot de la grille ou le mot mystère.', 'err');
+}
+function locked(pid) { return !!(S.final && !S.final.pending.has(pid)); }
+function useFinal(pid) {
+  if (!S.final || !S.final.pending.has(pid) || S.over) return;
+  S.final.pending.delete(pid);
+  log(`${S.P[pid].name} a joué sa dernière tentative.`, pid);
+  if (!S.final.pending.size) finishGame(`${S.P[S.final.by].name} a trouvé le mot mystère, puis chacun a joué sa dernière tentative.`);
+}
+function finalTimeout() {
+  if (!S || S.over || !S.final || Date.now() < S.final.endsAt) return;
+  const late = [...S.final.pending].map(id => S.P[id].name);
+  log(`Temps écoulé${late.length ? ' pour ' + late.join(', ') : ''}.`);
+  finishGame(`${S.P[S.final.by].name} a trouvé le mot mystère. Temps écoulé pour la dernière tentative.`);
+}
+function renderFinal() {
+  const el = $('#gFinal');
+  if (!S.final || S.over) { el.hidden = true; $('.timer').classList.remove('hot'); return; }
+  el.hidden = false;
+  $('.timer').classList.add('hot');
+  const left = Math.max(0, Math.ceil((S.final.endsAt - Date.now()) / 1000));
+  const by = S.P[S.final.by].name;
+  const waiting = [...S.final.pending].map(id => esc(S.P[id].name)).join(', ');
+  let msg;
+  if (S.final.by === 'me') msg = `Tu as trouvé le mot mystère ! Les autres jouent leur dernière tentative.`;
+  else if (S.final.pending.has('me')) msg = `<b>${esc(by)}</b> a trouvé le mot mystère. Tu as droit à <b>un seul essai</b> : un mot de la grille ou le mot mystère.`;
+  else msg = `Ta dernière tentative est jouée.`;
+  el.innerHTML = `<div class="row"><h2>Dernière chance</h2><span class="big">${left} s</span></div><p>${msg}</p>${waiting ? `<p class="note">En attente : ${waiting}</p>` : ''}`;
+}
+
+/* ---------------- Revoir la grille ---------------- */
+function openReview() {
+  S.review = true;
+  S.mode = 'grid';
+  S.sel = { w: G.orderIdx[0], typed: {}, cursor: null };
+  $('#gMenuBtn').hidden = true;
+  show('#scrGame');
+  fitGrid();
+  render();
+}
+function closeReview() {
+  S.review = false;
+  show('#scrRecap');
+}
+
+/* ---------------- Sélection, curseur et saisie ---------------- */
+// Le joueur tape le mot EN ENTIER, lettres déjà posées comprises :
+// le curseur parcourt toutes les cases du mot, sans sauter les lettres trouvées.
+function emptiesOf(wi) { return G.words[wi].cells.filter(k => S.fill[k] == null); }
+
+function selectWord(wi, cursor) {
+  if (S.sel.w !== wi) S.sel = { w: wi, typed: {}, cursor: null };
+  const cells = G.words[wi].cells;
+  S.sel.cursor = (cursor != null && cells.includes(cursor)) ? cursor : (cells.find(k => !S.sel.typed[k]) ?? cells[0]);
+}
+
+function selectNext(step) {
+  const open = G.orderIdx.filter(i => S.review || S.found[i] == null);
+  if (!open.length) { S.sel = { w: null, typed: {}, cursor: null }; return; }
+  if (S.sel.w == null || step === 0) { selectWord(open[0]); return; }
+  const pos = G.orderIdx.indexOf(S.sel.w), n = G.orderIdx.length;
+  for (let s = 1; s <= n; s++) {
+    const cand = G.orderIdx[((pos + step * s) % n + n) % n];
+    if (S.review || S.found[cand] == null) { selectWord(cand); return; }
+  }
+}
+
+function ensureCursor() {
+  if (S.sel.w == null) return null;
+  const cells = G.words[S.sel.w].cells;
+  if (!cells.includes(S.sel.cursor)) S.sel.cursor = cells.find(k => !S.sel.typed[k]) ?? cells[0];
+  return S.sel.cursor;
+}
+
+function moveCursor(step) {
+  if (S.sel.w == null) return;
+  const cells = G.words[S.sel.w].cells, i = cells.indexOf(ensureCursor());
+  S.sel.cursor = cells[Math.max(0, Math.min(cells.length - 1, i + step))];
+  render();
+}
+
+function typeLetter(ch) {
+  if (!S || S.over || locked('me')) return;
+  if (S.sel.w == null) selectNext(0);
+  if (S.sel.w == null) return;
+  const k = ensureCursor();
+  S.sel.typed[k] = ch;
+  const cells = G.words[S.sel.w].cells, i = cells.indexOf(k);
+  if (i < cells.length - 1) S.sel.cursor = cells[i + 1];
+  render();
+}
+
+function backspace() {
+  if (!S || S.over || S.sel.w == null) return;
+  const k = ensureCursor();
+  const cells = G.words[S.sel.w].cells, i = cells.indexOf(k);
+  if (S.sel.typed[k]) delete S.sel.typed[k];
+  else if (i > 0) { S.sel.cursor = cells[i - 1]; delete S.sel.typed[cells[i - 1]]; }
+  render();
+}
+
+function clearWord() {
+  if (!S || S.sel.w == null) return;
+  S.sel.typed = {};
+  S.sel.cursor = G.words[S.sel.w].cells[0];
+  render();
+}
+
+function toggleDirection() {
+  if (!S || S.sel.w == null) return;
+  const k = ensureCursor();
+  const x = G.cells[k];
+  const other = [x.h, x.v].find(v => v != null && v !== S.sel.w && S.found[v] == null);
+  if (other != null) { selectWord(other, k); render(); }
+}
+
+function submit() {
+  if (!S || S.over || S.sel.w == null) return;
+  if (locked('me')) { notice('Ta dernière tentative est déjà jouée.', 'err'); return; }
+  const now = Date.now();
+  if (now - S.lastTry < 1000) return; // limite de fréquence (invisible)
+  const wi = S.sel.w, w = G.words[wi];
+  if (w.cells.some(k => !S.sel.typed[k])) { notice('Tape le mot en entier avant de valider.', 'err'); return; }
+  S.lastTry = now;
+  const guess = w.cells.map(k => S.sel.typed[k]).join('');
+  if (guess === w.ans) {
+    const msgs = claimWord(wi, 'me');
+    log(msgs.join(' · '), 'me');
+    notice('Bien joué ! ' + msgs[0].replace(/^.*? trouve /, ''), 'ok');
+    S.sel = { w: wi, typed: {}, cursor: null };
+    selectNext(1);
+    useFinal('me');
+  } else {
+    const lost = penalize('me', settings.penWord);
+    log(`${S.P.me.name} se trompe (${guess}) −${lost}`, 'me');
+    S.sel.typed = {};
+    S.sel.cursor = w.cells[0];
+    const g = $('#gGrid');
+    g.classList.remove('shake'); void g.offsetWidth; g.classList.add('shake');
+    notice(`Raté : −${lost} points.`, 'err');
+    useFinal('me');
+  }
+  render();
+}
+
+function tapCell(k) {
+  if (S && S.review) {
+    const x = G.cells[k];
+    const opts = x.t === 'D' ? clueSlots(x).map(p => p[1]) : [x.h, x.v].filter(v => v != null);
+    if (!opts.length) return;
+    S.sel = { w: (opts.includes(S.sel.w) && opts.length > 1) ? opts.find(o => o !== S.sel.w) : opts[0], typed: {}, cursor: null };
+    render();
+    return;
+  }
+  if (!S || S.over) return;
+  if (S.mode === 'mystery') { closeMystery(); }
+  const x = G.cells[k];
+  if (x.t === 'D') {
+    const opts = clueSlots(x).map(p => p[1]);
+    if (!opts.length) return;
+    const open = opts.filter(o => S.found[o] == null);
+    if (!open.length) { const by = S.P[S.found[opts[0]]]; notice(`Déjà trouvé par ${by.name} : ${G.words[opts[0]].ans}`); return; }
+    const target = (S.sel.w != null && open.includes(S.sel.w) && open.length > 1) ? open.find(o => o !== S.sel.w) : open[0];
+    selectWord(target, G.words[target].cells[0]);
+    render();
+    return;
+  }
+  const opts = [x.h, x.v].filter(v => v != null);
+  const open = opts.filter(o => S.found[o] == null);
+  if (!open.length) { const by = S.P[S.found[opts[0]]]; notice(`Déjà trouvé par ${by.name} : ${G.words[opts[0]].ans}`); return; }
+  let target;
+  if (S.sel.w != null && open.includes(S.sel.w)) {
+    target = (S.sel.cursor === k && open.length > 1) ? open.find(o => o !== S.sel.w) : S.sel.w;
+  } else target = open[0];
+  selectWord(target, k);
+  render();
+}
+
+/* ---------------- Mot mystère ---------------- */
+function canPropose() {
+  return !!(S && G.myst && !S.over && !locked('me') && !S.stats.me.mAttempt && fillPct() >= MYST_THRESHOLD);
+}
+
+function openMystery() {
+  if (!canPropose()) return;
+  S.mode = 'mystery';
+  S.mTyped = [];
+  render();
+}
+
+function closeMystery() {
+  if (!S || S.mode !== 'mystery') return;
+  S.mode = 'grid';
+  S.mTyped = [];
+  render();
+}
+
+function mysteryType(ch) {
+  if (S.mTyped.length < G.myst.ans.length) S.mTyped.push(ch);
+  renderMystery();
+}
+
+function mysteryBack() {
+  S.mTyped.pop();
+  renderMystery();
+}
+
+function submitMystery() {
+  if (!canPropose() || S.mode !== 'mystery') return;
+  const ans = G.myst.ans;
+  if (S.mTyped.length < ans.length) { mNote(`Il manque ${ans.length - S.mTyped.length} lettre(s) : le mot en compte ${ans.length}.`); return; }
+  const guess = S.mTyped.join('');
+  const st = S.stats.me;
+  st.mAttempt = true;
+  st.mGuess = guess;
+  if (guess === ans) {
+    st.mOk = true; st.mystery = BONUS_MYST; addScore('me', BONUS_MYST);
+    log(`${S.P.me.name} trouve le mot mystère ! +${BONUS_MYST}`, 'me');
+    notice(`Mot mystère trouvé : ${ans} ! +${BONUS_MYST}`, 'ok');
+    if (S.final) useFinal('me'); else startFinal('me');
+  } else {
+    const lost = penalize('me', settings.penMyst);
+    st.mLost = lost;
+    log(`${S.P.me.name} se trompe sur le mot mystère (${guess}) −${lost}`, 'me');
+    notice(`Mot mystère : ${guess} est faux. −${lost} points.`, 'err');
+    useFinal('me');
+  }
+  if (!S.over) { S.mode = 'grid'; S.mTyped = []; }
+  render();
+}
+
+let mNoteMsg = '', mNoteTimer = null;
+function mNote(msg) {
+  mNoteMsg = msg;
+  clearTimeout(mNoteTimer);
+  mNoteTimer = setTimeout(() => { mNoteMsg = ''; if (S) renderMystery(); }, 3000);
+  renderMystery();
+}
+
+/* ---------------- Adversaires simulés ---------------- */
+function botTick() {
+  if (!S || S.over || S.paused) return;
+  const now = Date.now();
+  if (S.final) { finalBots(now); return; }
+  for (const p of S.players) {
+    if (!p.bot || now < p.nextAt || S.over) continue;
+    p.nextAt = now + botDelay();
+    const st = S.stats[p.id];
+    if (G.myst && fillPct() >= MYST_THRESHOLD && !st.mAttempt && Math.random() < 0.35) {
+      st.mAttempt = true;
+      if (Math.random() < 0.75) { st.mOk = true; st.mystery = BONUS_MYST; addScore(p.id, BONUS_MYST); log(`${p.name} trouve le mot mystère ! +${BONUS_MYST}`, p.id); startFinal(p.id); }
+      else { const lost = penalize(p.id, settings.penMyst); log(`${p.name} se trompe sur le mot mystère −${lost}`, p.id); }
+      render();
+      continue;
+    }
+    if (Math.random() < 0.2) { // les adversaires se trompent parfois
+      const lost = penalize(p.id, settings.penWord);
+      log(`${p.name} se trompe sur un mot −${lost}`, p.id);
+      render();
+      continue;
+    }
+    const open = G.words.map((w, i) => i).filter(i => S.found[i] == null);
+    if (!open.length) continue;
+    const weights = open.map(i => {
+      const w = G.words[i];
+      return (1 + w.cells.filter(k => S.fill[k] != null).length * 1.5) * (w.hard ? 0.5 : 1);
+    });
+    let r = Math.random() * weights.reduce((a, b) => a + b, 0), wi = open[0];
+    for (let j = 0; j < open.length; j++) { r -= weights[j]; if (r <= 0) { wi = open[j]; break; } }
+    const mine = S.sel.w === wi;
+    const msgs = claimWord(wi, p.id);
+    log(msgs.join(' · '), p.id);
+    if (mine) { notice(`${p.name} a été plus rapide sur ${G.words[wi].ans} !`, 'err'); selectNext(1); }
+    render();
+  }
+}
+
+function botPickWord() {
+  const open = G.words.map((w, i) => i).filter(i => S.found[i] == null);
+  if (!open.length) return null;
+  const weights = open.map(i => {
+    const w = G.words[i];
+    return (1 + w.cells.filter(k => S.fill[k] != null).length * 1.5) * (w.hard ? 0.5 : 1);
+  });
+  let r = Math.random() * weights.reduce((a, b) => a + b, 0);
+  for (let j = 0; j < open.length; j++) { r -= weights[j]; if (r <= 0) return open[j]; }
+  return open[open.length - 1];
+}
+
+// dernière tentative des adversaires simulés
+function finalBots(now) {
+  for (const p of S.players) {
+    if (!p.bot || S.over || !S.final.pending.has(p.id) || now < p.finalAt) continue;
+    const st = S.stats[p.id];
+    if (!st.mAttempt && Math.random() < 0.5) {
+      st.mAttempt = true;
+      if (Math.random() < 0.4) { st.mOk = true; st.mystery = BONUS_MYST; addScore(p.id, BONUS_MYST); log(`${p.name} trouve aussi le mot mystère ! +${BONUS_MYST}`, p.id); }
+      else { const lost = penalize(p.id, settings.penMyst); log(`${p.name} se trompe sur le mot mystère −${lost}`, p.id); }
+    } else {
+      const wi = botPickWord();
+      if (wi != null && Math.random() < 0.65) {
+        const mine = S.sel.w === wi;
+        log(claimWord(wi, p.id).join(' · '), p.id);
+        if (mine && !S.over) selectNext(1);
+      } else {
+        const lost = penalize(p.id, settings.penWord);
+        log(`${p.name} se trompe sur un mot −${lost}`, p.id);
+      }
+    }
+    useFinal(p.id);
+    render();
+  }
+}
+
+/* ---------------- Rendu ---------------- */
+let cellEls = [];
+function buildGridDom() {
+  const grid = $('#gGrid');
+  grid.innerHTML = '';
+  cellEls = [];
+  for (let k = 0; k < R * C; k++) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'cell';
+    b.tabIndex = -1;
+    b.addEventListener('mousedown', e => e.preventDefault());
+    b.addEventListener('click', () => tapCell(k));
+    grid.appendChild(b);
+    cellEls.push(b);
+  }
+}
+
+const AR_RIGHT = '<svg class="ar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 12h12"/><path d="M13 7l5 5-5 5"/></svg>';
+const AR_DOWN = '<svg class="ar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6v12"/><path d="M7 13l5 5 5-5"/></svg>';
+const AR_RD = '<svg class="ar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10v12"/><path d="M10 15l4 4 4-4"/></svg>';
+const AR_DR = '<svg class="ar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v10h12"/><path d="M15 10l4 4-4 4"/></svg>';
+const ARROWS = { r: AR_RIGHT, d: AR_DOWN, rd: AR_RD, dr: AR_DR };
+
+function render() {
+  if (!S) return;
+  renderGrid();
+  renderFinal();
+  renderScores();
+  renderClue();
+  renderMystery();
+}
+
+function renderGrid() {
+  const now = Date.now();
+  const sel = S.sel.w != null ? G.words[S.sel.w] : null;
+  const selSet = new Set(sel ? sel.cells : []);
+  const cur = S.over ? null : ensureCursor();
+  for (let k = 0; k < R * C; k++) {
+    const x = G.cells[k], el = cellEls[k];
+    if (x.t === 'D') {
+      const parts = clueSlots(x);
+      el.style.background = ''; el.style.boxShadow = '';
+      if (!parts.length) { el.className = 'cell filler'; el.innerHTML = ''; el.removeAttribute('title'); el.setAttribute('aria-label', 'Case vide'); continue; }
+      const hard = parts.some(p => G.words[p[1]].hard);
+      el.className = 'cell def' + (hard ? ' hard' : '') + (parts.length > 1 ? ' two' : '');
+      el.innerHTML = parts.map(([d, wi]) => {
+        const w = G.words[wi];
+        return `<div class="dq ${d === 'r' || d === 'rd' ? 'r' : 'd'}${S.found[wi] != null && !S.review ? ' done' : ''}${S.sel.w === wi ? ' on' : ''}"><span class="tx">${esc(w.clue)}</span>${ARROWS[d]}</div>`;
+      }).join('');
+      const label = parts.map(([d, wi]) => ({ r: '→ ', d: '↓ ', rd: '→↓ ', dr: '↓→ ' }[d]) + G.words[wi].clue).join('\n');
+      el.title = label;
+      el.setAttribute('aria-label', 'Définition : ' + label);
+      continue;
+    }
+    const pid = S.fill[k], tw = G.twinOf[k];
+    let bg = '#FFFFFF', fg = '#1F2937', ring = '';
+    if (pid) { bg = S.P[pid].tint; fg = S.P[pid].color; }
+    let letter = pid ? x.ch : '', ghost = false;
+    if (S.review) { letter = x.ch; if (!pid) { fg = '#A8B0BE'; bg = '#FFFFFF'; } }
+    if (selSet.has(k) && S.review) {
+      ring = 'inset 0 0 0 3px var(--act-ring)';
+    } else if (selSet.has(k)) {
+      if (!pid) bg = 'var(--sel)';
+      ring = 'inset 0 0 0 2px var(--sel-ring)';
+      const t = S.sel.typed[k];
+      if (t) { letter = t; fg = (pid && t !== x.ch) ? '#DC2626' : '#1F2937'; }
+      else if (pid) ghost = true; // lettre connue, à retaper
+      if (k === cur) { bg = 'var(--act)'; ring = 'inset 0 0 0 3px var(--act-ring)'; }
+    }
+    el.className = 'cell let' + (S.flash[k] && now - S.flash[k] < 650 ? ' flash' : '');
+    el.style.background = bg;
+    el.style.boxShadow = ring;
+    el.removeAttribute('title');
+    let h = '';
+    if (tw) h += wmSvg(tw.pair);
+    if (G.mystIdx[k]) h += `<span class="mc"></span><span class="mn">${G.mystIdx[k]}</span>`;
+    h += `<span class="l" style="color:${fg}${ghost ? ';opacity:.35' : ''}">${letter}</span>`;
+    el.innerHTML = h;
+    el.setAttribute('aria-label', `Ligne ${Math.floor(k / C) + 1}, colonne ${k % C + 1}${letter ? ', ' + letter : ', vide'}${tw ? ', case jumelle ' + TWIN_SYM[tw.pair] : ''}`);
+  }
+}
+
+function renderScores() {
+  const list = S.players.slice().sort((a, b) => S.stats[b.id].score - S.stats[a.id].score);
+  const now = Date.now();
+  $('#gScores').innerHTML = list.map((p, i) => {
+    const st = S.stats[p.id];
+    return `<div class="srow${p.id === 'me' ? ' me' : ''}${S.bump[p.id] && now - S.bump[p.id] < 400 ? ' bump' : ''}">
+      <span class="rk">${i + 1}</span>
+      <span class="nm"><span class="dot" style="background:${p.color}"></span>${esc(p.name)} <small>${st.words + st.combos} mot${st.words + st.combos > 1 ? 's' : ''}</small></span>
+      <span class="sc">${st.score}</span></div>`;
+  }).join('');
+}
+
+let noticeMsg = '', noticeKind = '', noticeTimer = null;
+function notice(msg, kind) {
+  noticeMsg = msg; noticeKind = kind || '';
+  clearTimeout(noticeTimer);
+  noticeTimer = setTimeout(() => { noticeMsg = ''; if (S) renderClue(); }, 3000);
+  renderClue();
+}
+
+function renderClue() {
+  const el = $('#gClue');
+  if (S.review) { renderReviewClue(el); return; }
+  if (S.over) { el.innerHTML = '<h2>Définition</h2><div class="clue">Partie terminée !</div>'; return; }
+  if (S.mode === 'mystery') { el.innerHTML = `<h2>Mot mystère</h2><div class="clue">Ta saisie va dans le mot mystère. Entrée pour valider, Échap pour revenir à la grille.</div><div class="notice ${noticeKind}" role="status">${esc(noticeMsg)}</div>`; return; }
+  if (S.sel.w == null) { el.innerHTML = '<h2>Définition</h2><div class="clue">Clique sur une case pour choisir un mot.</div>'; return; }
+  const w = G.words[S.sel.w];
+  const anyFilled = w.cells.some(k => S.fill[k] != null);
+  const twinsIn = [...new Set(w.cells.filter(k => G.twinOf[k] && S.fill[k] == null).map(k => G.twinOf[k].pair))];
+  const badges = [];
+  if (w.hard) badges.push('<span class="badge hard">Difficile ×2</span>');
+  twinsIn.forEach(p => badges.push(`<span class="badge tw">Jumelle ${TWIN_SYM[p]} +${PRIME_TWIN}</span>`));
+  if (!anyFilled) badges.push(`<span class="badge vg">Vierge +${BONUS_VIERGE}</span>`);
+  const arrow = w.dir === 'h'
+    ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15"/><path d="M14 7l5 5-5 5"/></svg>'
+    : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v15"/><path d="M7 14l5 5 5-5"/></svg>';
+  el.innerHTML = `
+    <div class="hd"><span class="ic${w.hard ? ' hard' : ''}">${arrow}</span><h2>${w.dir === 'h' ? 'Horizontal' : 'Vertical'}</h2></div>
+    <div class="clue">${esc(w.clue)}</div>
+    <div class="meta"><span class="len">${w.ans.length} lettres · ${wordBase(w)} pts</span>${badges.join('')}</div>
+    <p class="note">Tape le mot en entier, lettres déjà posées comprises. Erreur : −${settings.penWord} pts.</p>
+    <div class="acts">
+      <button class="btn sm ghost" type="button" data-a="prev" aria-label="Mot précédent">‹ Précédent</button>
+      <button class="btn sm ghost" type="button" data-a="clear">Effacer</button>
+      <button class="btn sm ghost" type="button" data-a="next" aria-label="Mot suivant">Suivant ›</button>
+    </div>
+    <button class="btn primary" type="button" data-a="ok">Valider <span style="opacity:.6;font-weight:500">(Entrée)</span></button>
+    <div class="notice ${noticeKind}" role="status">${esc(noticeMsg)}</div>`;
+}
+
+function renderReviewClue(el) {
+  const w = G.words[S.sel.w];
+  const pid = S.found[S.sel.w];
+  const who = pid
+    ? `<div class="who"><span class="dot" style="background:${S.P[pid].color}"></span>${S.how[S.sel.w] === 'trouvé' ? 'Trouvé' : 'Complété (' + S.how[S.sel.w] + ')'} par <b>${esc(S.P[pid].name)}</b></div>`
+    : `<div class="who"><span class="dot" style="background:#94A3B8"></span>Personne ne l'a trouvé</div>`;
+  el.innerHTML = `
+    <h2>Revoir la grille · ${w.dir === 'h' ? 'Horizontal' : 'Vertical'}</h2>
+    <div class="clue">${esc(w.clue)}</div>
+    <div class="answer">${[...w.ans].map(ch => `<span>${ch}</span>`).join('')}</div>
+    <div class="meta"><span class="len">${w.ans.length} lettres · ${wordBase(w)} pts</span>${w.diff ? `<span class="badge d-${w.diff}">${diffLabel(w.diff)}</span>` : (w.hard ? '<span class="badge hard">Difficile ×2</span>' : '')}</div>
+    ${w.expl ? `<div class="expl"><b>Explication :</b> ${esc(w.expl)}</div>` : ''}
+    ${w.author ? `<p class="note">Définition proposée par ${esc(w.author)}</p>` : ''}
+    ${who}
+    <div class="acts">
+      <button class="btn sm ghost" type="button" data-a="prev">‹ Précédent</button>
+      <button class="btn sm ghost" type="button" data-a="next">Suivant ›</button>
+    </div>
+    <button class="btn primary" type="button" data-a="back">Retour au récapitulatif <span style="opacity:.6;font-weight:500">(Échap)</span></button>`;
+}
+
+function renderMystery() {
+  if (!G.myst) return;
+  const st = S.stats.me, n = G.myst.ans.length;
+  const typing = S.mode === 'mystery';
+  if (S.review) {
+    $('#gMCard').classList.remove('on');
+    $('#gMSlots').innerHTML = [...G.myst.ans].map(ch => `<span class="mslot ok">${ch}</span>`).join('');
+    const finders = S.players.filter(p => S.stats[p.id].mOk).map(p => esc(p.name));
+    $('#gMAct').innerHTML = '';
+    $('#gMNote').textContent = finders.length ? 'Trouvé par ' + finders.join(', ') + '.' : 'Personne ne l\u2019a trouvé.';
+    return;
+  }
+  $('#gMCard').classList.toggle('on', typing);
+  $('#gMSlots').innerHTML = G.myst.cells.map((k, i) => {
+    const known = S.fill[k] != null ? G.cells[k].ch : '';
+    if (typing) {
+      const t = S.mTyped[i];
+      return `<span class="mslot${t ? ' t' : (known ? ' g' : '')}${i === S.mTyped.length ? ' cur' : ''}">${t || known}</span>`;
+    }
+    if (st.mOk) return `<span class="mslot ok">${G.myst.ans[i]}</span>`;
+    if (st.mAttempt) {
+      const g = st.mGuess[i] || '';
+      return `<span class="mslot ko">${g}</span>`;
+    }
+    return `<span class="mslot${known ? ' f' : ''}">${known}</span>`;
+  }).join('');
+  const pct = fillPct();
+  $('#gMPct').textContent = `${pct} % rempli`;
+  $('#gMBar').style.width = pct + '%';
+
+  let act = '', note = '';
+  if (st.mAttempt) {
+    act = st.mOk
+      ? `<div class="mres ok">Ta proposition ${st.mGuess} est juste ! +${BONUS_MYST} points</div>`
+      : `<div class="mres ko">Ta proposition ${st.mGuess} est fausse. −${st.mLost || 0} points</div>`;
+    note = 'Une seule proposition par joueur.';
+  } else if (typing) {
+    act = `<div class="mbtns"><button class="btn sm ghost" type="button" data-m="cancel">Annuler (Échap)</button><button class="btn sm primary" type="button" data-m="ok">Valider (Entrée)</button></div>`;
+    note = `Tape les ${n} lettres au clavier. Les lettres déjà visibles sont en filigrane : tape le mot en entier.`;
+  } else if (locked('me')) {
+    act = `<button class="btn" type="button" disabled style="width:100%">Proposer le mot mystère</button>`;
+    note = 'Ta dernière tentative est jouée.';
+  } else if (pct >= MYST_THRESHOLD && !S.over) {
+    act = `<button class="btn primary" type="button" data-m="open" style="width:100%">Proposer le mot mystère</button>`;
+    note = `${n} lettres. Une seule proposition : +${BONUS_MYST} si juste, −${settings.penMyst} si fausse.`;
+  } else {
+    act = `<button class="btn" type="button" disabled style="width:100%">Proposer le mot mystère</button>`;
+    note = `S'ouvre à ${MYST_THRESHOLD} % de grille remplie. Une seule proposition par joueur.`;
+  }
+  $('#gMAct').innerHTML = act;
+  $('#gMNote').textContent = mNoteMsg || note;
+}
+
+function log(msg, pid) {
+  if (!S) return;
+  const color = pid && S.P[pid] ? S.P[pid].color : '#A9ADCB';
+  S.feed.unshift({ t: fmtTime(Date.now() - S.startedAt), msg, color });
+  S.feed = S.feed.slice(0, 40);
+  $('#gFeed').innerHTML = S.feed.map(f => `<li><span class="dot" style="background:${f.color}"></span><span class="t">${f.t}</span><span>${esc(f.msg)}</span></li>`).join('');
+}
+
+function fitGrid() {
+  const b = $('#gBoard');
+  if (!b || !b.clientWidth) return;
+  const cell = Math.floor(Math.min((b.clientWidth - 11) / 10, (b.clientHeight - 14) / 13));
+  document.documentElement.style.setProperty('--cell', Math.max(40, Math.min(cell, 84)) + 'px');
+}
+
+/* ---------------- Menu de test ---------------- */
+function closeMenu() { $('#gMenu').hidden = true; $('#gMenuBtn').setAttribute('aria-expanded', 'false'); }
+function menuAction(act) {
+  closeMenu();
+  if (act === 'fill80') {
+    let guard = 0;
+    while (fillPct() < MYST_THRESHOLD && !S.over && guard++ < 500) {
+      const open = G.words.map((w, i) => i).filter(i => S.found[i] == null);
+      if (!open.length) break;
+      const bots = S.players.filter(p => p.bot);
+      const p = bots[Math.floor(Math.random() * bots.length)];
+      claimWord(open[Math.floor(Math.random() * open.length)], p.id);
+    }
+    if (S.sel.w == null || S.found[S.sel.w] != null) selectNext(0);
+    log(`Test : grille remplie à ${fillPct()} %, le mot mystère est ouvert.`);
+    render();
+  } else if (act === 'pause') {
+    S.paused = !S.paused;
+    document.querySelector('#gMenu [data-act=pause]').textContent = S.paused ? 'Relancer les adversaires' : 'Mettre les adversaires en pause';
+    log(S.paused ? 'Test : adversaires en pause.' : 'Test : adversaires relancés.');
+    if (!S.paused) { const now = Date.now(); S.players.forEach(p => { if (p.bot) p.nextAt = now + botDelay(); }); }
+  } else if (act === 'finish') {
+    finishGame('Partie arrêtée depuis le menu de test.');
+  } else if (act === 'lobby') {
+    S.over = true;
+    roomCode = makeCode();
+    renderLobby();
+    show('#scrLobby');
+  }
+}
+
+/* ---------------- Récapitulatif ---------------- */
+function renderRecap() {
+  const list = S.players.slice().sort((a, b) => S.stats[b.id].score - S.stats[a.id].score);
+  const total = G.words.length, foundN = S.found.filter(v => v != null).length;
+  const mFinders = S.players.filter(p => S.stats[p.id].mOk).map(p => esc(p.name));
+  const ranks = list.map((p, i) => {
+    const st = S.stats[p.id];
+    return `<div class="rank${p.id === 'me' ? ' me' : ''}">
+      <div class="hd"><span class="pos${i === 0 ? ' p1' : ''}">${i + 1}</span><span class="nm"><span class="dot" style="background:${p.color}"></span>${esc(p.name)}</span><span class="tot">${st.score}</span></div>
+      <table>
+        <tr><td>Score de départ</td><td>${st.start}</td></tr>
+        <tr><td>Mots trouvés (${st.words})</td><td>${st.wordPts}</td></tr>
+        <tr><td>Bonus mot vierge</td><td>${st.vierge}</td></tr>
+        <tr><td>Primes jumelles</td><td>${st.twins}</td></tr>
+        <tr><td>Combos et croisements (${st.combos})</td><td>${st.comboPts}</td></tr>
+        <tr><td>Mot mystère</td><td>${st.mystery}</td></tr>
+        <tr><td>Pénalités (${st.penN} erreur${st.penN > 1 ? 's' : ''})</td><td>${st.pen ? '−' + st.pen : '0'}</td></tr>
+      </table></div>`;
+  }).join('');
+  let fin = '';
+  for (let k = 0; k < R * C; k++) {
+    const x = G.cells[k];
+    if (x.t === 'D') fin += `<i style="background:${clueSlots(x).length ? '#E9E4D4' : '#2B2F52'}"></i>`;
+    else {
+      const pid = S.fill[k];
+      fin += `<i style="background:${pid ? S.P[pid].tint : '#FFFFFF'};color:${pid ? S.P[pid].color : '#9CA3AF'}">${x.ch}</i>`;
+    }
+  }
+  const pop = G.words.filter(w => w.theme !== 'commun');
+  const req = displayPercents();
+  const bars = THEMES.map(t => {
+    const n = pop.filter(w => w.theme === t.id).length;
+    const pct = pop.length ? Math.round(n / pop.length * 100) : 0;
+    return `<div class="bar"><span>${esc(t.label)}</span><span class="tr"><i style="width:${pct}%"></i></span><span class="v">${pct} % / ${req[t.id]} %</span></div>`;
+  }).join('');
+  $('#recap').innerHTML = `
+    <div class="col">
+      <div><span class="eyebrow">Salon ${roomCode} · mode ${settings.gameMode === 'classic' ? 'classique' : 'dernière chance'}</span><h1>Partie terminée</h1></div>
+      ${S.endReason ? `<p class="reason">${esc(S.endReason)}</p>` : ''}
+      <div class="stats">
+        <div class="stat"><span class="eyebrow">Temps</span><b>${fmtTime((S.endedAt || Date.now()) - S.startedAt)}</b></div>
+        <div class="stat"><span class="eyebrow">Mots</span><b>${foundN} / ${total}</b></div>
+        <div class="stat"><span class="eyebrow">Mot mystère</span><b>${G.myst ? G.myst.ans : '—'}</b></div>
+      </div>
+      <p class="note">${mFinders.length ? 'Mot mystère trouvé par ' + mFinders.join(', ') + '.' : 'Personne n’a trouvé le mot mystère.'}</p>
+      ${ranks}
+      <div style="display:flex;gap:10px">
+        <button class="btn primary" type="button" id="rAgain" style="flex:1">Rejouer avec les mêmes réglages</button>
+        <button class="btn ghost" type="button" id="rLobby">Retour au salon</button>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card"><div class="row"><h2>La grille finale</h2><button class="btn sm primary" type="button" id="rReview">Revoir la grille en détail</button></div><div class="final" aria-hidden="true">${fin}</div><p class="note">Chaque lettre est colorée selon le joueur qui l'a posée ; en gris, les lettres que personne n'a trouvées.</p></div>
+      <div class="card"><h2>Thèmes : réel / demandé</h2><div class="bars">${bars}</div></div>
+    </div>`;
+  $('#rAgain').onclick = startGame;
+  $('#rReview').onclick = openReview;
+  $('#rLobby').onclick = () => { roomCode = makeCode(); renderLobby(); renderLobbyDefs(); show('#scrLobby'); };
+}
+
+/* ---------------- Événements ---------------- */
+function initGameEvents() {
+  $('#gClue').addEventListener('click', e => {
+    const b = e.target.closest('[data-a]');
+    if (!b || !S) return;
+    const a = b.dataset.a;
+    if (S.review) {
+      if (a === 'prev') { selectNext(-1); render(); }
+      else if (a === 'next') { selectNext(1); render(); }
+      else if (a === 'back') closeReview();
+      return;
+    }
+    if (S.over) return;
+    if (a === 'prev') { selectNext(-1); render(); }
+    else if (a === 'next') { selectNext(1); render(); }
+    else if (a === 'clear') clearWord();
+    else if (a === 'ok') submit();
+  });
+  $('#gMAct').addEventListener('click', e => {
+    const b = e.target.closest('[data-m]');
+    if (!b || !S) return;
+    const m = b.dataset.m;
+    if (m === 'open') openMystery();
+    else if (m === 'cancel') closeMystery();
+    else if (m === 'ok') submitMystery();
+  });
+  $('#gMenuBtn').addEventListener('click', () => {
+    const m = $('#gMenu');
+    m.hidden = !m.hidden;
+    $('#gMenuBtn').setAttribute('aria-expanded', String(!m.hidden));
+  });
+  $('#gMenu').addEventListener('click', e => { const b = e.target.closest('[data-act]'); if (b) menuAction(b.dataset.act); });
+  document.addEventListener('click', e => { if (!e.target.closest('.menuwrap')) closeMenu(); });
+  document.addEventListener('keydown', e => {
+    if (!$('#scrGame').classList.contains('on') || !S) return;
+    if (S.review) {
+      if (e.key === 'Tab' || e.key === 'ArrowRight' || e.key === 'ArrowDown') { selectNext(e.shiftKey ? -1 : 1); render(); e.preventDefault(); }
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { selectNext(-1); render(); e.preventDefault(); }
+      else if (e.key === 'Escape') closeReview();
+      return;
+    }
+    if (S.over) return;
+    if (e.target.tagName === 'INPUT') { if (e.key === 'Escape') e.target.blur(); return; }
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (S.mode === 'mystery') {
+      if (/^[a-zA-Z]$/.test(e.key)) { mysteryType(e.key.toUpperCase()); e.preventDefault(); }
+      else if (e.key === 'Backspace' || e.key === 'Delete') { mysteryBack(); e.preventDefault(); }
+      else if (e.key === 'Enter') { submitMystery(); e.preventDefault(); }
+      else if (e.key === 'Escape') { closeMystery(); e.preventDefault(); }
+      else if (e.key === 'Tab' || e.key === ' ') e.preventDefault();
+      return;
+    }
+    if (/^[a-zA-Z]$/.test(e.key)) { typeLetter(e.key.toUpperCase()); e.preventDefault(); }
+    else if (e.key === 'Backspace' || e.key === 'Delete') { backspace(); e.preventDefault(); }
+    else if (e.key === 'Enter') { submit(); e.preventDefault(); }
+    else if (e.key === 'Tab') { selectNext(e.shiftKey ? -1 : 1); render(); e.preventDefault(); }
+    else if (e.key === ' ') { toggleDirection(); e.preventDefault(); }
+    else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { moveCursor(1); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { moveCursor(-1); e.preventDefault(); }
+    else if (e.key === 'Escape') closeMenu();
+  });
+  if (window.ResizeObserver) new ResizeObserver(fitGrid).observe($('#gBoard'));
+  window.addEventListener('resize', fitGrid);
+  setInterval(() => {
+    if (!S || S.over) return;
+    $('#gTimer').textContent = S.final ? `Fin dans ${Math.max(0, Math.ceil((S.final.endsAt - Date.now()) / 1000))} s` : fmtTime(Date.now() - S.startedAt);
+    if (S.final) { renderFinal(); finalTimeout(); }
+  }, 250);
+  setInterval(botTick, 400);
+}
+
+/* =====================================================================
+   DÉFINITIONS DE LA COMMUNAUTÉ (éditeur + modération)
+   Dans le prototype, la « base de données » est le stockage local du navigateur.
+   En production : table `definitions` sur le serveur (voir le document de conception).
+   ===================================================================== */
+const DEF_LIMITS = { clueMax: 40, ansMin: 2, ansMax: 10, explMin: 10, explMax: 280 };
+const DIFFS = [
+  { id: 'facile', label: 'Facile', help: 'Référence très connue, définition directe.' },
+  { id: 'moyen', label: 'Moyen', help: 'Il faut connaître l’œuvre ou décoder un petit jeu de mots.' },
+  { id: 'difficile', label: 'Difficile', help: 'Référence pointue ou définition détournée. Fond rouge, points ×2.' },
+  { id: 'expert', label: 'Expert', help: 'Pour les fans. Fond rouge, points ×2 (barème à revoir).' }
+];
+const diffLabel = id => (DIFFS.find(d => d.id === id) || {}).label || id;
+const isHardDiff = id => id === 'difficile' || id === 'expert';
+const STORE_KEY = 'motscultes.definitions.v1';
+const STATUS = { pending: 'En attente', approved: 'Validée', rejected: 'Refusée', deleted: 'Supprimée' };
+
+let DEFS = loadDefs();
+function loadDefs() {
+  try { const v = JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); return Array.isArray(v) ? v : []; }
+  catch (e) { return []; }
+}
+function saveDefs() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(DEFS)); return true; }
+  catch (e) { return false; }
+}
+
+// Réponse saisie → lettres de grille : majuscules, sans accents, espaces, tirets ni apostrophes.
+function normAnswer(raw) {
+  let s = String(raw || '').toUpperCase().replace(/Œ/g, 'OE').replace(/Æ/g, 'AE');
+  s = s.normalize('NFD').replace(/[̀-ͯ]/g, '');
+  s = s.replace(/[\s\-'’.]/g, '');
+  return s;
+}
+const normClue = s => String(s || '').trim().replace(/\s+/g, ' ');
+const sameClue = (a, b) => normAnswer(a) === normAnswer(b);
+
+// La banque utilisée par le générateur : la banque intégrée + les définitions validées.
+function currentBank() {
+  const extra = DEFS.filter(d => d.status === 'approved').map(d => ({
+    ans: d.ans, theme: d.theme, clue: d.clue, hard: isHardDiff(d.diff),
+    diff: d.diff, expl: d.expl, author: d.author, user: true
+  }));
+  return BUILTIN.map(effBuiltin).filter(b => !b.deleted).concat(extra);
+}
+
+function checkDef(f, opts) {
+  opts = opts || {};
+  const errs = {}, warns = {};
+  const ans = normAnswer(f.ans);
+  if (!String(f.ans || '').trim()) errs.ans = 'Indique la réponse.';
+  else if (/[^A-Z]/.test(ans)) errs.ans = 'Lettres uniquement : pas de chiffres ni de caractères spéciaux.';
+  else if (ans.length < DEF_LIMITS.ansMin || ans.length > DEF_LIMITS.ansMax) errs.ans = `Entre ${DEF_LIMITS.ansMin} et ${DEF_LIMITS.ansMax} lettres (ici ${ans.length}).`;
+  const clue = normClue(f.clue);
+  if (!clue) errs.clue = 'Écris la définition.';
+  else if (clue.length > DEF_LIMITS.clueMax) errs.clue = `${DEF_LIMITS.clueMax} caractères maximum.`;
+  else if (ans.length >= 3 && normAnswer(clue).includes(ans)) errs.clue = 'La définition ne doit pas contenir la réponse.';
+  if (!f.diff && !opts.diffOptional) errs.diff = 'Choisis une difficulté.';
+  const expl = String(f.expl || '').trim();
+  if (expl.length < DEF_LIMITS.explMin && !(opts.explOptional && !expl.length)) errs.expl = `Explique en quelques mots (${DEF_LIMITS.explMin} caractères minimum).`;
+  if (!errs.ans && !errs.clue) {
+    const self = f.key || (f.id ? 'c:' + f.id : null);
+    const all = allRows().filter(r => r.key !== self && r.status !== 'rejected' && r.status !== 'deleted');
+    const same = all.filter(x => x.ans === ans);
+    if (same.some(x => sameClue(x.clue, clue))) errs.clue = 'Cette définition existe déjà pour ce mot.';
+    else if (same.length) warns.ans = `${ans} existe déjà (« ${same[0].clue} »). Ta définition s'ajoutera comme variante.`;
+  }
+  return { ok: !Object.keys(errs).length, errs, warns, ans, clue, expl };
+}
+
+/* ---------------- Aperçu ---------------- */
+function previewCellHtml(clue, hard, second) {
+  const tx = esc(clue || 'Ta définition');
+  const one = `<div class="dq r"><span class="tx">${tx}</span>${AR_RIGHT}</div>`;
+  if (!second) return `<div class="cell def${hard ? ' hard' : ''}">${one}</div>`;
+  return `<div class="cell def two${hard ? ' hard' : ''}">${one}<div class="dq d"><span class="tx">Autre définition voisine</span>${AR_DOWN}</div></div>`;
+}
+
+/* ---------------- Éditeur ---------------- */
+const ed = { diff: 'moyen', touched: {} };
+function edForm() { return { ans: $('#edAns').value, clue: $('#edClue').value, diff: ed.diff, expl: $('#edExpl').value, theme: $('#edTheme').value }; }
+
+function renderEditor() {
+  const f = edForm(), r = checkDef(f);
+  const show = k => ed.touched[k] || ed.touched.submit;
+  const hint = (id, k, okText) => {
+    const el = $(id);
+    if (show(k) && r.errs[k]) { el.textContent = r.errs[k]; el.className = 'hint err'; }
+    else if (r.warns[k]) { el.textContent = r.warns[k]; el.className = 'hint warn'; }
+    else { el.textContent = okText || ''; el.className = 'hint'; }
+  };
+  hint('#edAnsHint', 'ans', f.ans.trim() && !r.errs.ans ? `${r.ans} · ${r.ans.length} lettres (${DEF_LIMITS.ansMin} à ${DEF_LIMITS.ansMax})` : `${DEF_LIMITS.ansMin} à ${DEF_LIMITS.ansMax} lettres. Accents, espaces et tirets sont retirés automatiquement.`);
+  hint('#edClueHint', 'clue', 'Courte et percutante : c’est ce qui s’affiche dans la case.');
+  hint('#edExplHint', 'expl', 'Montrée aux joueurs en fin de partie, et aux modérateurs pour valider.');
+  hint('#edDiffHint', 'diff', (DIFFS.find(d => d.id === ed.diff) || {}).help);
+  const cl = normClue(f.clue).length;
+  $('#edClueCount').textContent = `${cl} / ${DEF_LIMITS.clueMax}`;
+  $('#edClueCount').className = 'count' + (cl > DEF_LIMITS.clueMax - 6 ? ' near' : '');
+  $('#edExplCount').textContent = `${f.expl.trim().length} / ${DEF_LIMITS.explMax}`;
+  document.querySelectorAll('#edDiff button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === ed.diff)));
+  const hard = isHardDiff(ed.diff);
+  $('#edPv1').innerHTML = previewCellHtml(normClue(f.clue), hard, false);
+  $('#edPv2').innerHTML = previewCellHtml(normClue(f.clue), hard, true);
+  const letters = r.errs.ans ? normAnswer(f.ans).replace(/[^A-Z]/g, '') : r.ans;
+  $('#edPvWord').innerHTML = (letters || '?'.repeat(5)).slice(0, 12).split('').map(c => `<span>${c === '?' ? '' : c}</span>`).join('');
+  const cut = [...document.querySelectorAll('#edPv2 .tx')].some(t => t.scrollHeight > t.clientHeight + 1);
+  $('#edPvNote').textContent = cut
+    ? 'Attention : dans une case partagée, ton texte est coupé. Les joueurs le liront en entier dans le panneau de définition, mais une version plus courte serait plus lisible.'
+    : 'Une case peut porter deux définitions : vise un texte court qui reste lisible dans une case partagée.';
+  $('#edPvNote').className = 'note' + (cut ? ' warntxt' : '');
+  renderMine();
+}
+
+function renderMine() {
+  const list = DEFS.slice().sort((a, b) => b.createdAt - a.createdAt);
+  $('#edMineCount').textContent = list.length ? `${list.length} au total` : '';
+  $('#edMine').innerHTML = list.length ? list.map(d => `
+    <div class="mrow">
+      <div><b>${esc(d.ans)}</b> <span class="note">${esc(d.clue)}</span></div>
+      <span class="st ${d.status}">${STATUS[d.status]}</span>
+      ${d.status === 'rejected' && d.comment ? `<p class="note full">Modération : ${esc(d.comment)}</p>` : ''}
+    </div>`).join('') : '<p class="note">Aucune proposition pour l’instant.</p>';
+}
+
+function submitDef(e) {
+  e.preventDefault();
+  ed.touched.submit = true;
+  const f = edForm(), r = checkDef(f);
+  const msg = $('#edMsg');
+  if (!r.ok) { renderEditor(); msg.textContent = 'Corrige les champs signalés avant d’envoyer.'; msg.className = 'msg err'; return; }
+  DEFS.push({
+    id: 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    ans: r.ans, typed: f.ans.trim(), clue: r.clue, theme: f.theme, diff: ed.diff, expl: r.expl,
+    author: settings.pseudo, status: 'pending', comment: '', createdAt: Date.now(), reviewedAt: null
+  });
+  const saved = saveDefs();
+  msg.textContent = saved ? `« ${r.clue} » → ${r.ans} est envoyée en validation.` : 'Envoyée, mais le stockage du navigateur est indisponible : elle sera perdue au rechargement.';
+  msg.className = 'msg ' + (saved ? 'ok' : 'err');
+  $('#edAns').value = ''; $('#edClue').value = ''; $('#edExpl').value = '';
+  ed.touched = {};
+  renderEditor();
+  renderLobbyDefs();
+  $('#edAns').focus();
+}
+
+/* ---------------- Modération ---------------- */
+const mo = { filter: 'pending' };
+function renderModo() {
+  const counts = { pending: 0, approved: 0, rejected: 0, deleted: 0 };
+  DEFS.forEach(d => counts[d.status]++);
+  $('#moFilter').innerHTML = ['pending', 'approved', 'rejected'].map(k =>
+    `<button type="button" data-f="${k}" aria-pressed="${k === mo.filter}">${STATUS[k].replace('Validée', 'Validées').replace('Refusée', 'Refusées')} (${counts[k]})</button>`).join('');
+  const list = DEFS.filter(d => d.status === mo.filter).sort((a, b) => a.createdAt - b.createdAt);
+  if (!list.length) {
+    $('#moList').innerHTML = `<div class="card"><p class="note">${mo.filter === 'pending' ? 'Aucune proposition en attente. Les nouvelles propositions de l’éditeur arrivent ici.' : 'Rien ici pour l’instant.'}</p></div>`;
+    return;
+  }
+  $('#moList').innerHTML = list.map(d => {
+    const r = checkDef({ ...d, ans: d.typed || d.ans });
+    const variant = r.warns.ans ? `<p class="note warntxt">${esc(r.warns.ans)}</p>` : '';
+    const date = new Date(d.createdAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+    let actions = '';
+    if (d.status === 'pending') {
+      actions = `
+        <div class="moacts">
+          <label class="field"><span>Difficulté</span><select data-diff="${d.id}">${DIFFS.map(x => `<option value="${x.id}"${x.id === d.diff ? ' selected' : ''}>${x.label}</option>`).join('')}</select></label>
+          <label class="field grow"><span>Commentaire (montré à l’auteur en cas de refus)</span><input type="text" data-comment="${d.id}" maxlength="140" placeholder="ex. Réponse ambiguë, définition trop longue…"></label>
+          <button class="btn sm ghost danger" type="button" data-act="reject" data-id="${d.id}">Refuser</button>
+          <button class="btn sm primary" type="button" data-act="approve" data-id="${d.id}">Valider</button>
+        </div>`;
+    } else {
+      actions = `<div class="moacts">
+        ${d.comment ? `<p class="note grow">Commentaire : ${esc(d.comment)}</p>` : '<span class="grow"></span>'}
+        <button class="btn sm ghost" type="button" data-act="reopen" data-id="${d.id}">Repasser en attente</button></div>`;
+    }
+    return `<article class="card mocard">
+      <div class="mohead">
+        <div class="pvcell small">${previewCellHtml(d.clue, isHardDiff(d.diff), false)}</div>
+        <div class="mobody">
+          <div class="row" style="justify-content:flex-start;flex-wrap:wrap;gap:8px">
+            <span class="answ">${esc(d.ans)}</span>
+            <span class="note">${d.ans.length} lettres · ${esc(themeLabel(d.theme))}</span>
+            <span class="badge d-${d.diff}">${diffLabel(d.diff)}</span>
+          </div>
+          <div class="moclue">${esc(d.clue)}</div>
+          <p class="moexpl"><b>Explication :</b> ${esc(d.expl)}</p>
+          ${variant}
+          <p class="note">Proposée par ${esc(d.author)} · ${date}</p>
+        </div>
+      </div>
+      ${actions}
+    </article>`;
+  }).join('');
+}
+
+function moAction(act, id) {
+  const d = DEFS.find(x => x.id === id);
+  if (!d) return;
+  if (act === 'approve') {
+    const sel = document.querySelector(`[data-diff="${id}"]`);
+    if (sel) d.diff = sel.value;
+    d.status = 'approved'; d.comment = ''; d.reviewedAt = Date.now();
+  } else if (act === 'reject') {
+    const c = document.querySelector(`[data-comment="${id}"]`);
+    d.status = 'rejected'; d.comment = c ? c.value.trim() : ''; d.reviewedAt = Date.now();
+  } else if (act === 'reopen') {
+    d.status = 'pending'; d.reviewedAt = null;
+  }
+  saveDefs();
+  renderModo();
+  renderLobbyDefs();
+}
+
+function exportDefs() {
+  const blob = new Blob([JSON.stringify(DEFS, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'mots-cultes-definitions.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function importDefs(file) {
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const arr = JSON.parse(rd.result);
+      if (!Array.isArray(arr)) throw new Error('format');
+      const known = new Set(DEFS.map(d => d.id));
+      let n = 0;
+      arr.forEach(d => {
+        if (!d || !d.id || known.has(d.id) || !d.ans || !d.clue || !STATUS[d.status]) return;
+        DEFS.push(d); known.add(d.id); n++;
+      });
+      saveDefs(); renderModo(); renderLobbyDefs();
+      alertLine(`${n} définition(s) importée(s).`);
+    } catch (e) { alertLine('Fichier illisible : il faut un export JSON de ce prototype.'); }
+  };
+  rd.readAsText(file);
+}
+function alertLine(msg) {
+  const p = document.createElement('div');
+  p.className = 'card'; p.innerHTML = `<p class="note">${esc(msg)}</p>`;
+  $('#moList').prepend(p);
+  setTimeout(() => p.remove(), 4000);
+}
+
+/* ---------------- Salon ---------------- */
+function renderLobbyDefs() {
+  const pend = DEFS.filter(d => d.status === 'pending').length;
+  const ok = DEFS.filter(d => d.status === 'approved').length;
+  $('#lDefsInfo').textContent = ok
+    ? `${ok} définition${ok > 1 ? 's' : ''} de la communauté validée${ok > 1 ? 's' : ''}, utilisée${ok > 1 ? 's' : ''} dans les grilles.`
+    : 'Aucune définition de la communauté validée pour l’instant.';
+  $('#lModo').textContent = `Modération${pend ? ` (${pend} en attente)` : ''}`;
+}
+
+function fillEdTheme() {
+  const cur = $('#edTheme').value;
+  $('#edTheme').innerHTML = editorThemes().map(t => `<option value="${t.id}">${esc(t.label)}</option>`).join('');
+  if (editorThemes().some(t => t.id === cur)) $('#edTheme').value = cur;
+}
+function initDefs() {
+  fillEdTheme();
+  $('#edDiff').innerHTML = DIFFS.map(d => `<button type="button" data-v="${d.id}">${d.label}</button>`).join('');
+  $('#edDiff').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (b) { ed.diff = b.dataset.v; renderEditor(); } });
+  [['#edAns', 'ans'], ['#edClue', 'clue'], ['#edExpl', 'expl']].forEach(([sel, k]) => {
+    $(sel).addEventListener('input', () => { $('#edMsg').textContent = ''; renderEditor(); });
+    $(sel).addEventListener('blur', () => { ed.touched[k] = true; renderEditor(); });
+  });
+  $('#edTheme').addEventListener('change', renderEditor);
+  $('#edForm').addEventListener('submit', submitDef);
+  $('#moFilter').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (b) { mo.filter = b.dataset.f; renderModo(); } });
+  $('#moList').addEventListener('click', e => { const b = e.target.closest('[data-act]'); if (b) moAction(b.dataset.act, b.dataset.id); });
+  $('#moExport').addEventListener('click', exportDefs);
+  $('#moImport').addEventListener('change', e => { if (e.target.files[0]) importDefs(e.target.files[0]); e.target.value = ''; });
+  $('#moClear').addEventListener('click', () => {
+    if (!DEFS.length) return;
+    if (!window.confirm('Effacer toutes les propositions enregistrées dans ce navigateur ?')) return;
+    DEFS = []; saveDefs(); renderModo(); renderLobbyDefs();
+  });
+  $('#lPropose').onclick = () => { fillEdTheme(); ed.touched = {}; $('#edMsg').textContent = ''; show('#scrEditor'); renderEditor(); $('#edAns').focus(); };
+  $('#lModo').onclick = () => { if (!can.moderate()) return; show('#scrModo'); renderModo(); };
+  document.querySelectorAll('[data-go="lobby"]').forEach(b => b.addEventListener('click', () => { buildThemeSliders(); renderLobby(); renderLobbyDefs(); renderRole(); show('#scrLobby'); }));
+  renderLobbyDefs();
+}
+
+/* =====================================================================
+   RÔLES, THÈMES ET ADMINISTRATION
+   Prototype : le rôle est un « profil de test » choisi dans le salon.
+   En production, le rôle vient du compte et le serveur vérifie chaque droit.
+   ===================================================================== */
+const ROLES = [
+  { id: 'joueur', label: 'Joueur' },
+  { id: 'moderateur', label: 'Modérateur' },
+  { id: 'admin', label: 'Admin' }
+];
+const can = {
+  propose: () => true,
+  moderate: () => settings.role === 'moderateur' || settings.role === 'admin',
+  admin: () => settings.role === 'admin'
+};
+const ROLE_KEY = 'motscultes.role.v1', THEMES_KEY = 'motscultes.themes.v1', OVR_KEY = 'motscultes.themeOverrides.v1', EDITS_KEY = 'motscultes.builtinEdits.v1';
+const DEFAULT_THEMES = THEMES.map(t => ({ id: t.id, label: t.label, active: true, custom: false }));
+let ALL_THEMES = [];   // tous les thèmes (hors « Mot courant »), actifs ou non
+// Mots de la banque intégrée, avec un identifiant stable (leur position dans la banque).
+// Les modifications de l'admin sont enregistrées à part : EDITS[id] = champs modifiés (+ deleted).
+const BUILTIN = BANK.map((b, i) => ({ ...b, id: 'b' + i, diff: b.hard ? 'difficile' : '' }));
+let EDITS = {};
+function effBuiltin(b) {
+  const e = EDITS[b.id];
+  if (!e) return b;
+  const r = { ...b, ...e };
+  r.hard = r.diff ? isHardDiff(r.diff) : false;
+  return r;
+}
+function saveEdits() { lsSet(EDITS_KEY, EDITS); }
+
+function lsGet(key, fallback) { try { const v = localStorage.getItem(key); return v == null ? fallback : JSON.parse(v); } catch (e) { return fallback; } }
+function lsSet(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch (e) { return false; } }
+
+function loadThemes() {
+  const stored = lsGet(THEMES_KEY, null);
+  if (Array.isArray(stored) && stored.length) {
+    ALL_THEMES = DEFAULT_THEMES.map(d => ({ ...d, ...(stored.find(s => s.id === d.id) || {}), custom: false }))
+      .concat(stored.filter(s => s.custom && !DEFAULT_THEMES.some(d => d.id === s.id)));
+  } else ALL_THEMES = DEFAULT_THEMES.map(t => ({ ...t }));
+  EDITS = lsGet(EDITS_KEY, {}) || {};
+  const oldOvr = lsGet(OVR_KEY, null); // ancien format (changements de thème seulement) → migration
+  if (oldOvr && typeof oldOvr === 'object') {
+    Object.entries(oldOvr).forEach(([k, theme]) => {
+      const b = BUILTIN.find(x => 'b:' + x.ans + '|' + x.clue === k);
+      if (b) EDITS[b.id] = { ...(EDITS[b.id] || {}), theme };
+    });
+    saveEdits();
+    try { localStorage.removeItem(OVR_KEY); } catch (e) {}
+  }
+  settings.role = lsGet(ROLE_KEY, 'admin');
+  applyThemes();
+}
+function saveThemes() { lsSet(THEMES_KEY, ALL_THEMES); }
+
+// THEMES = thèmes actifs, utilisés par le salon, le générateur et le récapitulatif
+function applyThemes() {
+  THEMES.length = 0;
+  ALL_THEMES.filter(t => t.active).forEach(t => THEMES.push({ id: t.id, label: t.label }));
+  normalizeWeights();
+}
+function normalizeWeights() {
+  const ids = THEMES.map(t => t.id);
+  Object.keys(settings.weights).forEach(k => { if (!ids.includes(k)) delete settings.weights[k]; });
+  ids.forEach(k => { if (!(settings.weights[k] >= 0)) settings.weights[k] = 0; });
+  const sum = ids.reduce((s, k) => s + settings.weights[k], 0);
+  ids.forEach(k => { settings.weights[k] = sum > 0 ? settings.weights[k] * 100 / sum : 100 / ids.length; });
+}
+const editorThemes = () => THEMES.concat([{ id: 'commun', label: 'Mot courant' }]);
+const themeLabel = id => id === 'commun' ? 'Mot courant' : ((ALL_THEMES.find(t => t.id === id) || {}).label || id);
+
+// Toute la base, sous une forme commune : banque intégrée + propositions de la communauté
+function allRows() {
+  const rows = BUILTIN.map(b0 => {
+    const b = effBuiltin(b0), e = EDITS[b0.id];
+    return {
+      key: 'b:' + b0.id, src: 'builtin', ans: b.ans, clue: b.clue, theme: b.theme, diff: b.diff || '',
+      status: b.deleted ? 'deleted' : 'approved', author: '', expl: b.expl || '', date: 0,
+      edited: !!(e && Object.keys(e).some(k => k !== 'deleted' && k !== 'editedAt' && k !== 'editedBy')),
+      editedBy: e && e.editedBy
+    };
+  });
+  DEFS.forEach(d => rows.push({
+    key: 'c:' + d.id, src: 'community', ans: d.ans, clue: d.clue, theme: d.theme,
+    diff: d.diff, status: d.status, author: d.author, expl: d.expl, date: d.createdAt, comment: d.comment,
+    edited: !!d.editedAt, editedBy: d.editedBy
+  }));
+  return rows;
+}
+function themeWordCounts() {
+  const c = {};
+  allRows().forEach(r => { if (r.status !== 'approved') return; c[r.theme] = (c[r.theme] || 0) + 1; });
+  return c;
+}
+function setRowTheme(key, theme) { saveRow(key, { theme }); }
+
+// Enregistre les champs modifiés d'une définition (banque intégrée ou communauté)
+function saveRow(key, fields) {
+  if (key.startsWith('b:')) {
+    const b = BUILTIN.find(x => 'b:' + x.id === key);
+    if (!b) return;
+    const e = { ...(EDITS[b.id] || {}) };
+    Object.entries(fields).forEach(([k, v]) => { if (v === b[k] || (k === 'expl' && !v && !b.expl)) delete e[k]; else e[k] = v; });
+    const changed = Object.keys(e).some(k => k !== 'editedAt' && k !== 'editedBy');
+    if (changed) { e.editedAt = Date.now(); e.editedBy = settings.pseudo; EDITS[b.id] = e; } else delete EDITS[b.id];
+    saveEdits();
+  } else {
+    const d = DEFS.find(x => 'c:' + x.id === key);
+    if (!d) return;
+    Object.assign(d, fields);
+    d.editedAt = Date.now(); d.editedBy = settings.pseudo;
+    saveDefs();
+  }
+}
+function deleteRow(key) {
+  if (key.startsWith('b:')) {
+    const id = key.slice(2);
+    EDITS[id] = { ...(EDITS[id] || {}), deleted: true, editedAt: Date.now(), editedBy: settings.pseudo };
+    saveEdits();
+  } else {
+    const d = DEFS.find(x => 'c:' + x.id === key);
+    if (!d || d.status === 'deleted') return;
+    d.prevStatus = d.status; d.status = 'deleted'; d.editedAt = Date.now(); d.editedBy = settings.pseudo;
+    saveDefs();
+  }
+}
+function restoreRow(key) {
+  if (key.startsWith('b:')) {
+    const id = key.slice(2);
+    if (!EDITS[id]) return;
+    delete EDITS[id].deleted;
+    if (!Object.keys(EDITS[id]).some(k => k !== 'editedAt' && k !== 'editedBy')) delete EDITS[id];
+    saveEdits();
+  } else {
+    const d = DEFS.find(x => 'c:' + x.id === key);
+    if (!d || d.status !== 'deleted') return;
+    d.status = d.prevStatus || 'pending'; delete d.prevStatus;
+    saveDefs();
+  }
+}
+function revertBuiltin(key) {
+  const id = key.slice(2);
+  if (EDITS[id]) { const del = EDITS[id].deleted; delete EDITS[id]; if (del) EDITS[id] = { deleted: true }; saveEdits(); }
+}
+
+/* ---------------- Salon : curseurs des thèmes actifs ---------------- */
+function buildThemeSliders() {
+  normalizeWeights();
+  const counts = themeWordCounts();
+  $('#lThemes').innerHTML = THEMES.length ? THEMES.map(t => `
+    <div class="theme"><label for="th_${t.id}">${esc(t.label)}<small>${counts[t.id] || 0} mots</small></label>
+      <input type="range" id="th_${t.id}" min="0" max="100" step="1">
+      <output id="tho_${t.id}" for="th_${t.id}"></output></div>`).join('')
+    : '<p class="note">Aucun thème actif : active un thème dans l’administration.</p>';
+  THEMES.forEach(t => $('#th_' + t.id).addEventListener('input', e => setTheme(t.id, +e.target.value)));
+}
+
+/* ---------------- Rôle de test ---------------- */
+function renderRole() {
+  document.querySelectorAll('#lRole button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === settings.role)));
+  $('#lModo').hidden = !can.moderate();
+  $('#lAdmin').hidden = !can.admin();
+}
+
+/* ---------------- Écran d'administration ---------------- */
+const ad = { tab: 'base', limit: 150 };
+function openAdmin(tab, filters) {
+  if (!can.admin()) return;
+  ad.tab = tab || ad.tab;
+  ad.limit = 150;
+  fillAdminFilters();
+  if (filters) Object.entries(filters).forEach(([id, v]) => { $(id).value = v; });
+  show('#scrAdmin');
+  renderAdmin();
+}
+function fillAdminFilters() {
+  const cur = $('#adTheme').value;
+  $('#adTheme').innerHTML = '<option value="">Tous</option>' +
+    ALL_THEMES.map(t => `<option value="${t.id}">${esc(t.label)}${t.active ? '' : ' (inactif)'}</option>`).join('') +
+    '<option value="commun">Mot courant</option>';
+  $('#adTheme').value = cur;
+  if (!$('#adDiff').options.length) {
+    $('#adDiff').innerHTML = '<option value="">Toutes</option>' + DIFFS.map(d => `<option value="${d.id}">${d.label}</option>`).join('') + '<option value="none">Non classée</option>';
+  }
+}
+function renderAdmin() {
+  document.querySelectorAll('#adTabs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.t === ad.tab)));
+  $('#adBase').hidden = ad.tab !== 'base';
+  $('#adThemes').hidden = ad.tab !== 'themes';
+  if (ad.tab === 'base') renderBase(); else renderThemeAdmin();
+}
+
+function filteredRows() {
+  const q = normAnswer($('#adQ').value).toLowerCase(), qRaw = $('#adQ').value.trim().toLowerCase();
+  const th = $('#adTheme').value, df = $('#adDiff').value, src = $('#adSrc').value, st = $('#adStatus').value;
+  return allRows().filter(r =>
+    (!th || r.theme === th) &&
+    (!df || (df === 'none' ? !r.diff : r.diff === df)) &&
+    (!src || r.src === src) &&
+    (st === 'all' || (!st ? r.status !== 'deleted' : r.status === st)) &&
+    (!qRaw || r.ans.toLowerCase().includes(q) || r.clue.toLowerCase().includes(qRaw) || (r.author || '').toLowerCase().includes(qRaw) || (r.expl || '').toLowerCase().includes(qRaw))
+  ).sort((a, b) => a.ans.localeCompare(b.ans) || a.clue.localeCompare(b.clue));
+}
+function renderBase() {
+  const rows = filteredRows(), total = allRows().filter(r => r.status !== 'deleted').length;
+  $('#adCount').textContent = `${rows.length} définition${rows.length > 1 ? 's' : ''} affichée${rows.length > 1 ? 's' : ''} sur ${total}`;
+  const themeOpts = sel => ALL_THEMES.map(t => `<option value="${t.id}"${t.id === sel ? ' selected' : ''}>${esc(t.label)}${t.active ? '' : ' (inactif)'}</option>`).join('') +
+    `<option value="commun"${sel === 'commun' ? ' selected' : ''}>Mot courant</option>`;
+  $('#adRows').innerHTML = rows.slice(0, ad.limit).map(r => `
+    <tr class="${r.status === 'deleted' ? 'gone' : ''}">
+      <td><span class="answ sm">${esc(r.ans)}</span><small class="note">${r.ans.length} l.</small></td>
+      <td><div>${esc(r.clue)}</div>${r.expl ? `<div class="note">${esc(r.expl)}</div>` : ''}${r.comment ? `<div class="note warntxt">Modération : ${esc(r.comment)}</div>` : ''}</td>
+      <td>${r.status === 'deleted' ? `<span class="note">${esc(themeLabel(r.theme))}</span>` : `<select data-row="${esc(r.key)}" aria-label="Thème de ${esc(r.ans)}">${themeOpts(r.theme)}</select>`}</td>
+      <td>${r.diff ? `<span class="badge d-${r.diff}">${diffLabel(r.diff)}</span>` : '<span class="note">Non classée</span>'}</td>
+      <td class="note">${r.src === 'builtin' ? 'Intégrée' : 'Communauté'}</td>
+      <td><span class="st ${r.status}">${STATUS[r.status]}</span></td>
+      <td class="note">${r.author ? esc(r.author) : '—'}${r.edited ? `<div><span class="tag">modifiée${r.editedBy ? ' par ' + esc(r.editedBy) : ''}</span></div>` : ''}</td>
+      <td class="acts">${r.status === 'deleted'
+        ? `<button class="btn sm ghost" type="button" data-restore="${esc(r.key)}">Restaurer</button>`
+        : `<button class="btn sm ghost" type="button" data-edit="${esc(r.key)}">Modifier</button>`}</td>
+    </tr>`).join('') || '<tr><td colspan="8" class="note">Aucun résultat.</td></tr>';
+  const rest = rows.length - ad.limit;
+  $('#adMore').hidden = rest <= 0;
+  $('#adMore').textContent = `Afficher ${Math.min(150, rest)} de plus (${rest} restantes)`;
+}
+function exportCsv() {
+  const cell = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const lines = [['Réponse', 'Lettres', 'Définition', 'Thème', 'Difficulté', 'Source', 'Statut', 'Auteur', 'Explication'].map(cell).join(';')];
+  filteredRows().forEach(r => lines.push([r.ans, r.ans.length, r.clue, themeLabel(r.theme), r.diff ? diffLabel(r.diff) : 'Non classée',
+    r.src === 'builtin' ? 'Intégrée' : 'Communauté', STATUS[r.status], r.author, r.expl].map(cell).join(';')));
+  const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'mots-cultes-base.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function renderThemeAdmin() {
+  const all = allRows();
+  const stat = id => {
+    const r = all.filter(x => x.theme === id);
+    return { total: r.filter(x => x.status === 'approved').length, b: r.filter(x => x.src === 'builtin').length, c: r.filter(x => x.src === 'community' && x.status === 'approved').length, pend: r.filter(x => x.status === 'pending').length };
+  };
+  const rowHtml = (t, s, fixed) => `
+    <div class="card trow${t.active === false ? ' off' : ''}">
+      <div class="grow">
+        ${fixed ? `<b>${esc(t.label)}</b>` : `<input type="text" class="tname" data-rename="${t.id}" value="${esc(t.label)}" maxlength="24" aria-label="Nom du thème">`}
+        <div class="note">${s.total} mot${s.total > 1 ? 's' : ''} validé${s.total > 1 ? 's' : ''} (${s.b} intégré${s.b > 1 ? 's' : ''}, ${s.c} de la communauté)${s.pend ? ` · ${s.pend} en attente` : ''}${t.custom ? ' · thème créé' : ''}</div>
+      </div>
+      ${fixed ? '<span class="note">Toujours actif (remplissage)</span>' : `
+      <label class="tgl"><input type="checkbox" data-active="${t.id}"${t.active ? ' checked' : ''}><span>${t.active ? 'Actif' : 'Inactif'}</span></label>`}
+      <button class="btn sm ghost" type="button" data-see="${t.id}">Voir les mots</button>
+      ${t.custom ? `<button class="btn sm ghost danger" type="button" data-del="${t.id}"${all.some(x => x.theme === t.id && x.status !== 'deleted') ? ' disabled title="Déplace ou supprime d’abord ses mots"' : ''}>Supprimer</button>` : ''}
+    </div>`;
+  $('#adThemeList').innerHTML = ALL_THEMES.map(t => rowHtml(t, stat(t.id), false)).join('') +
+    rowHtml({ id: 'commun', label: 'Mot courant', active: true }, stat('commun'), true);
+}
+function slugify(s) {
+  return normAnswer(s).toLowerCase().slice(0, 16) || 'theme';
+}
+function createTheme(e) {
+  e.preventDefault();
+  const name = $('#adThemeName').value.trim().replace(/\s+/g, ' ');
+  const msg = $('#adThemeMsg');
+  if (!name) { msg.textContent = 'Donne un nom au thème.'; msg.className = 'hint err'; return; }
+  if (ALL_THEMES.some(t => t.label.toLowerCase() === name.toLowerCase()) || name.toLowerCase() === 'mot courant') {
+    msg.textContent = 'Ce thème existe déjà.'; msg.className = 'hint err'; return;
+  }
+  const id = 't_' + slugify(name) + '_' + Math.random().toString(36).slice(2, 5);
+  ALL_THEMES.push({ id, label: name, active: true, custom: true });
+  themesChanged();
+  $('#adThemeName').value = '';
+  msg.textContent = `Thème « ${name} » créé. Il apparaît dans le salon (à 0 %) et dans l’éditeur de définitions.`;
+  msg.className = 'hint ok';
+  renderThemeAdmin();
+}
+function themesChanged() {
+  saveThemes(); applyThemes(); buildThemeSliders(); renderLobby(); fillAdminFilters();
+}
+
+/* ---------------- Édition / suppression d'une définition (admin) ---------------- */
+const em = { key: null, armed: false };
+function rowByKey(key) { return allRows().find(r => r.key === key); }
+function emForm() {
+  return { key: em.key, ans: $('#emAns').value, clue: $('#emClue').value, theme: $('#emTheme').value,
+    diff: $('#emDiff').value, expl: $('#emExpl').value, status: $('#emStatus').value };
+}
+function openEditModal(key) {
+  if (!can.admin()) return;
+  const r = rowByKey(key);
+  if (!r) return;
+  em.key = key; em.armed = false;
+  const builtin = r.src === 'builtin';
+  $('#emTitle').textContent = `Modifier ${r.ans}`;
+  $('#emSrc').textContent = builtin ? 'Banque intégrée' : `Communauté · proposée par ${r.author}`;
+  $('#emAns').value = r.ans;
+  $('#emClue').value = r.clue;
+  $('#emTheme').innerHTML = ALL_THEMES.map(t => `<option value="${t.id}">${esc(t.label)}${t.active ? '' : ' (inactif)'}</option>`).join('') + '<option value="commun">Mot courant</option>';
+  $('#emTheme').value = r.theme;
+  $('#emDiff').innerHTML = (builtin ? '<option value="">Non classée</option>' : '') + DIFFS.map(d => `<option value="${d.id}">${d.label}</option>`).join('');
+  $('#emDiff').value = r.diff || '';
+  $('#emExpl').value = r.expl || '';
+  $('#emStatusWrap').hidden = builtin;
+  if (!builtin) $('#emStatus').value = r.status;
+  const orig = builtin ? BUILTIN.find(b => 'b:' + b.id === key) : null;
+  $('#emOrigin').hidden = !(builtin && r.edited);
+  if (builtin && r.edited) $('#emOrigin').innerHTML = `<b>Version d'origine :</b> ${esc(orig.ans)} · « ${esc(orig.clue)} » · ${esc(themeLabel(orig.theme))} · ${orig.diff ? diffLabel(orig.diff) : 'Non classée'}`;
+  $('#emRevert').hidden = !(builtin && r.edited);
+  resetDelBtn();
+  $('#emMsg').textContent = ''; $('#emMsg').className = 'grow msg';
+  $('#emWrap').hidden = false;
+  renderEditModal(false);
+  $('#emClue').focus();
+}
+function closeEditModal() { $('#emWrap').hidden = true; em.key = null; }
+function resetDelBtn() { em.armed = false; $('#emDel').textContent = 'Supprimer'; $('#emDel').classList.remove('armed'); }
+function renderEditModal(showErrs) {
+  const r = rowByKey(em.key);
+  if (!r) return null;
+  const f = emForm();
+  const res = checkDef(f, { diffOptional: r.src === 'builtin', explOptional: r.src === 'builtin' });
+  const hint = (id, k, base) => {
+    const el = $(id);
+    if (showErrs && res.errs[k]) { el.textContent = res.errs[k]; el.className = 'hint err'; }
+    else if (res.errs[k] && k !== 'expl') { el.textContent = res.errs[k]; el.className = 'hint err'; }
+    else if (res.warns[k]) { el.textContent = res.warns[k]; el.className = 'hint warn'; }
+    else { el.textContent = base; el.className = 'hint'; }
+  };
+  hint('#emAnsHint', 'ans', res.errs.ans ? '' : `${res.ans} · ${res.ans.length} lettres`);
+  hint('#emClueHint', 'clue', '');
+  hint('#emExplHint', 'expl', r.src === 'builtin' ? 'Facultative pour la banque intégrée.' : '');
+  $('#emClueCount').textContent = `${normClue(f.clue).length} / ${DEF_LIMITS.clueMax}`;
+  $('#emExplCount').textContent = `${f.expl.trim().length} / ${DEF_LIMITS.explMax}`;
+  return res;
+}
+function saveEditModal(e) {
+  e.preventDefault();
+  const r = rowByKey(em.key);
+  const res = renderEditModal(true);
+  if (!r || !res) return;
+  if (!res.ok) { $('#emMsg').textContent = 'Corrige les champs signalés.'; $('#emMsg').className = 'grow msg err'; return; }
+  const f = emForm();
+  const fields = { ans: res.ans, clue: res.clue, theme: f.theme, diff: f.diff, expl: res.expl };
+  if (r.src === 'community') {
+    fields.typed = res.ans;
+    if (f.status !== r.status) { fields.status = f.status; fields.reviewedAt = Date.now(); }
+  }
+  saveRow(em.key, fields);
+  closeEditModal();
+  adRefresh(`${res.ans} enregistrée.`);
+}
+function adRefresh(msg) {
+  renderBase(); buildThemeSliders(); renderLobby(); renderLobbyDefs();
+  if (msg) { $('#adCount').textContent += ` · ${msg}`; }
+}
+function initEditModal() {
+  ['#emAns', '#emClue', '#emExpl', '#emDiff', '#emTheme', '#emStatus'].forEach(id => $(id).addEventListener('input', () => { resetDelBtn(); $('#emMsg').textContent = ''; renderEditModal(false); }));
+  $('#emForm').addEventListener('submit', saveEditModal);
+  $('#emCancel').addEventListener('click', closeEditModal);
+  $('#emWrap').addEventListener('click', e => { if (e.target.id === 'emWrap') closeEditModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#emWrap').hidden) closeEditModal(); });
+  // suppression en deux temps : un premier clic arme le bouton, le second confirme
+  $('#emDel').addEventListener('click', () => {
+    if (!em.armed) { em.armed = true; $('#emDel').textContent = 'Confirmer la suppression'; $('#emDel').classList.add('armed'); return; }
+    const r = rowByKey(em.key);
+    deleteRow(em.key);
+    closeEditModal();
+    adRefresh(`${r ? r.ans : 'Définition'} supprimée (restaurable via le filtre « Supprimée »).`);
+  });
+  $('#emRevert').addEventListener('click', () => {
+    revertBuiltin(em.key);
+    closeEditModal();
+    adRefresh('Version d’origine rétablie.');
+  });
+}
+
+function initAdmin() {
+  $('#lRole').innerHTML = ROLES.map(r => `<button type="button" data-v="${r.id}">${r.label}</button>`).join('');
+  $('#lRole').addEventListener('click', e => {
+    const b = e.target.closest('[data-v]');
+    if (!b) return;
+    settings.role = b.dataset.v; lsSet(ROLE_KEY, settings.role);
+    renderRole();
+  });
+  $('#lAdmin').onclick = () => openAdmin('base');
+  $('#adTabs').addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (b) { ad.tab = b.dataset.t; renderAdmin(); } });
+  ['#adQ', '#adTheme', '#adDiff', '#adSrc', '#adStatus'].forEach(id => $(id).addEventListener('input', () => { ad.limit = 150; renderBase(); }));
+  $('#adMore').addEventListener('click', () => { ad.limit += 150; renderBase(); });
+  $('#adCsv').addEventListener('click', exportCsv);
+  $('#adRows').addEventListener('change', e => {
+    const s = e.target.closest('[data-row]');
+    if (!s) return;
+    setRowTheme(s.dataset.row, s.value);
+    buildThemeSliders(); renderLobby();
+    renderBase();
+  });
+  $('#adNewTheme').addEventListener('submit', createTheme);
+  $('#adRows').addEventListener('click', e => {
+    const ed = e.target.closest('[data-edit]');
+    if (ed) { openEditModal(ed.dataset.edit); return; }
+    const rs = e.target.closest('[data-restore]');
+    if (rs) { restoreRow(rs.dataset.restore); adRefresh(`Définition restaurée.`); }
+  });
+  initEditModal();
+  $('#adThemeList').addEventListener('change', e => {
+    const a = e.target.closest('[data-active]');
+    if (a) {
+      const t = ALL_THEMES.find(x => x.id === a.dataset.active);
+      if (!a.checked && ALL_THEMES.filter(x => x.active).length <= 1) { a.checked = true; $('#adThemeMsg').textContent = 'Il faut garder au moins un thème actif.'; $('#adThemeMsg').className = 'hint err'; return; }
+      t.active = a.checked; themesChanged(); renderThemeAdmin();
+      return;
+    }
+    const r = e.target.closest('[data-rename]');
+    if (r) {
+      const t = ALL_THEMES.find(x => x.id === r.dataset.rename);
+      const name = r.value.trim().replace(/\s+/g, ' ');
+      if (!name || ALL_THEMES.some(x => x !== t && x.label.toLowerCase() === name.toLowerCase())) { r.value = t.label; return; }
+      t.label = name; themesChanged(); renderThemeAdmin();
+    }
+  });
+  $('#adThemeList').addEventListener('click', e => {
+    const see = e.target.closest('[data-see]');
+    if (see) { ad.tab = 'base'; ['#adQ', '#adDiff', '#adSrc', '#adStatus'].forEach(id => $(id).value = ''); $('#adTheme').value = see.dataset.see; ad.limit = 150; renderAdmin(); return; }
+    const del = e.target.closest('[data-del]');
+    if (del && !del.disabled) {
+      allRows().filter(r => r.theme === del.dataset.del).forEach(r => saveRow(r.key, { theme: 'commun' })); // mots supprimés → « Mot courant »
+      ALL_THEMES = ALL_THEMES.filter(t => t.id !== del.dataset.del);
+      themesChanged(); renderThemeAdmin();
+    }
+  });
+  renderRole();
+}
+
+loadThemes();
+initLobby();
+initGameEvents();
+initDefs();
+initAdmin();
+</script>
+</body>
+</html>
