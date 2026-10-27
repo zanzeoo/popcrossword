@@ -154,7 +154,7 @@ input[type=range]{width:100%;accent-color:#FACC15;height:28px}
 .toast .dot{margin-top:4px}
 @keyframes tin{from{opacity:0;transform:translateY(-6px)}}
 
-.banner{min-height:58px;background:var(--panel);border-radius:12px;display:flex;align-items:center;gap:7px;padding:6px;flex:none}
+.banner{height:72px;background:var(--panel);border-radius:12px;display:flex;align-items:center;gap:7px;padding:6px;flex:none;overflow:hidden} /* hauteur fixe : la grille ne bouge pas d'un mot à l'autre */
 .banner .nav{width:34px;height:46px;border-radius:9px;border:0;background:var(--panel2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;padding:0;touch-action:manipulation}
 .banner .nav.wide{width:auto;padding:0 12px;font-size:13px;font-weight:600}
 .banner .ic{width:28px;height:28px;border-radius:8px;background:var(--panel2);display:flex;align-items:center;justify-content:center;flex:none}
@@ -162,7 +162,7 @@ input[type=range]{width:100%;accent-color:#FACC15;height:28px}
 .banner .txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
 .banner .txt.pad{padding:0 6px}
 .banner .clue{font-size:15px;font-weight:500;line-height:1.2;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
-.banner .meta{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.banner .meta{display:flex;gap:5px;align-items:center;flex-wrap:nowrap;overflow:hidden;white-space:nowrap}
 .banner .len{font-size:11px;color:var(--muted);line-height:1.3}
 .banner .answ{font-size:14px;font-weight:700;letter-spacing:.12em;background:#F4F4F8;color:#14162B;border-radius:5px;padding:2px 7px}
 .banner .who{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#C9CCE4}
@@ -409,8 +409,8 @@ function render() {
   renderScores();
   renderClue();
   renderMystery();
-  renderKeyboard();
-  followCursor();
+  // Clavier ouvert ou replié : la zone de la grille vient de changer de hauteur, recentrage immédiat.
+  followCursor(renderKeyboard());
 }
 
 // Garde la case du curseur visible quand la grille défile (grande grille, loupe, clavier ouvert).
@@ -553,7 +553,7 @@ function fitGrid() {
   const byHeight = Math.floor((b.clientHeight + kbH - 14) / 13);
   const cell = ui.zoom
     ? Math.min(Math.round(byWidth * 1.7), 76)           // loupe : on fait défiler dans les deux sens
-    : Math.max(30, Math.min(byWidth, byHeight, 56));    // sinon toute la grille, ou au moins 30 px
+    : Math.min(byWidth, Math.max(byHeight, 30), 56);    // sinon toute la grille (30 px au moins), sans dépasser en largeur
   document.documentElement.style.setProperty('--cell', cell + 'px');
   $('#app').classList.toggle('zoom', ui.zoom);
 }
@@ -740,7 +740,9 @@ function initGameEvents() {
     else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { moveCursor(-1); e.preventDefault(); }
     else if (e.key === 'Escape') closeMenu();
   });
-  if (window.ResizeObserver) new ResizeObserver(fitGrid).observe($('#gWrap'));
+  // La zone de la grille change de hauteur (clavier, bandeau sur une ou deux lignes, police chargée) :
+  // on recalcule les cases et on garde le curseur visible.
+  if (window.ResizeObserver) new ResizeObserver(() => { fitGrid(); followCursor(true); }).observe($('#gWrap'));
   window.addEventListener('resize', fitGrid);
   // Chronomètre et compte à rebours : la fin de la dernière chance est décidée par le serveur.
   setInterval(() => {
@@ -793,12 +795,14 @@ function renderKeyboard() {
   if (kb.dataset.view !== view) { kb.innerHTML = view === 'review' ? KB_REVIEW : KB_KEYS; kb.dataset.view = view; }
   // Le clavier n'apparaît que pour écrire : mot mystère, ou mot choisi en touchant la grille.
   const show = view === 'review' || S.mode === 'mystery' || (ui.kb && S.sel.w != null && !S.over && !locked(me));
-  if (kb.hidden === show) { kb.hidden = !show; requestAnimationFrame(() => followCursor(true)); }
+  const changed = kb.hidden === show;
+  if (changed) kb.hidden = !show;
   if (view === 'keys') {
     kb.classList.remove('dim');
     $('#gOk').textContent = S.mode === 'mystery' ? 'Proposer' : 'Valider';
     kb.querySelector('.kbhide').hidden = S.mode === 'mystery';
   }
+  return changed;
 }
 
 let sheetView = null;

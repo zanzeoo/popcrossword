@@ -184,7 +184,7 @@ Côté serveur, chaque droit est vérifié par l'API : masquer un bouton ne prot
 
 - **Clavier AZERTY intégré** au jeu, à la place du clavier natif : la mise en page reste stable, sans autocorrection ni majuscules automatiques.
 - **Le clavier est replié par défaut**, pour laisser toute la place à la grille. Toucher une case ou la définition l'ouvre ; une poignée « Replier le clavier » le referme. Il s'ouvre tout seul pour le mot mystère.
-- **La grille occupe tout l'écran** : clavier replié, elle tient en entier (cases de 30 px au minimum) ; clavier ouvert, elle défile et suit le mot en cours.
+- **La grille occupe tout l'écran** : clavier replié, elle tient en entier (cases de 30 px au minimum, 28 px sur les écrans de 320 px de large) ; clavier ouvert, elle défile et suit le mot en cours.
 - **Loupe** (en-tête) : agrandit la grille d'environ 1,7 fois. Les cases de définition affichent alors leur texte, et la grille défile dans les deux sens en suivant le curseur. Le choix est mémorisé.
 - Sans loupe, les cases de définition n'affichent que leurs **flèches**. La définition complète apparaît dans un **bandeau** sous la grille, avec les boutons mot précédent et mot suivant.
 - Une **ligne d'info** au-dessus de la grille affiche les événements de la partie sans jamais masquer de case. Les retours du joueur (raté, bien joué) restent affichés au moins 1,8 s.

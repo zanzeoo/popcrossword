@@ -87,6 +87,7 @@ try {
   await bob.locator('#gGrid .cell').nth(lastWord.cells[0]).tap();
   await bob.waitForSelector('#gKb:not([hidden])');
   assert.equal(await bob.locator('#gKb [data-k]').count(), 29); // 26 lettres, effacer, valider, replier
+  await sleep(300); // laisse la zone de la grille prendre sa nouvelle hauteur
   const visible = await bob.evaluate((k) => { const r = cellEls[k].getBoundingClientRect(), w = document.querySelector('#gWrap').getBoundingClientRect(); return r.top >= w.top - 1 && r.bottom <= w.bottom + 1; }, lastWord.cells[0]);
   assert.ok(visible, 'la case touchée est cachée par le clavier');
   assert.equal(await bob.evaluate(() => parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell'), 10)), cell); // pas de saut de taille
