@@ -1,6 +1,6 @@
 // Service worker du client mobile : l'interface est servie depuis le cache pour un démarrage rapide,
 // puis rafraîchie en arrière-plan. L'API et le temps réel ne passent jamais par le cache.
-const CACHE = 'motscultes-v1';
+const CACHE = 'motscultes-v2'; // changer la version à chaque modification de l'interface
 const SHELL = ['/mobile/', '/shared/core.js', '/socket.io/socket.io.min.js', '/mobile/icon.svg', '/mobile/manifest.webmanifest'];
 
 self.addEventListener('install', (e) => {
