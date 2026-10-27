@@ -35,7 +35,7 @@ Chaque message client reçoit un accusé : `{ ok: true, ... }` ou `{ ok: false, 
 | `room:resume` | jeton | reconnexion : renvoie l'état complet (`room:state`, puis `game:grid` ou `game:over`) |
 | `room:settings` | réglages partiels | créateur seulement, salon en attente |
 | `room:leave` | — | en attente, libère la place (le créateur passe la main) ; en partie, le joueur reste au classement |
-| `game:start` | — | créateur seulement, 2 joueurs au minimum |
+| `game:start` | — | créateur seulement ; possible dès qu'il est seul dans le salon |
 | `word:submit` | `word` (index), `letters` | une tentative par seconde (Redis) ; mot encore libre ; joueur pas verrouillé par la dernière chance |
 | `mystery:submit` | `letters` | grille remplie à 80 % ou plus ; une seule proposition par joueur ; bonne longueur |
 

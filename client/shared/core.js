@@ -215,10 +215,10 @@ function renderLobby() {
     $('#tho_' + t.id).textContent = disp[t.id] + ' %';
   });
 
-  const enough = room.players.length >= 2;
+  // Le créateur peut lancer seul : les autres joueurs sont facultatifs.
   $('#lStart').hidden = !host;
-  $('#lStart').disabled = !enough || room.status !== 'lobby';
-  $('#lStart').textContent = enough ? 'Lancer la partie' : 'En attente d’au moins un autre joueur…';
+  $('#lStart').disabled = room.status !== 'lobby';
+  $('#lStart').textContent = room.players.length > 1 ? 'Lancer la partie' : 'Lancer la partie en solo';
 }
 
 function initLobby() {

@@ -16,7 +16,7 @@ Un jeu de mots fléchés multijoueur en ligne, en compétition, dont les répons
 Le seul mode de la première version est la **compétition en temps réel, en salon privé**.
 
 1. Un joueur choisit un **pseudo** (pas de compte) et crée un salon. Il reçoit un **code à 4 caractères** à partager.
-2. Les autres joueurs saisissent leur pseudo et rejoignent le salon avec ce code : **2 à 8 joueurs**.
+2. Les autres joueurs saisissent leur pseudo et rejoignent le salon avec ce code : **jusqu'à 8 joueurs**. Le créateur peut aussi lancer la partie seul.
 3. Le créateur règle le salon :
    - le **dosage des thèmes**, par curseurs dont le total fait toujours 100 % ;
    - le **mode de jeu** : Classique ou Dernière chance ;

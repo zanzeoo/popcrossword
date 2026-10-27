@@ -8,7 +8,7 @@ import * as rules from './rules.js';
 import * as store from './store.js';
 import { saveGame } from './persist.js';
 
-export const MAX_PLAYERS = 8, MIN_PLAYERS = 2;
+export const MAX_PLAYERS = 8, MIN_PLAYERS = 1; // le créateur peut jouer seul
 const IDLE_MS = 30 * 60 * 1000;        // salon sans joueur connecté
 const OVER_KEEP_MS = 2 * 3600 * 1000;  // récapitulatif encore consultable après la fin
 
@@ -37,7 +37,7 @@ const ERRORS = {
   hors_salon: "Tu n'es dans aucun salon.",
   reserve_createur: 'Réservé au créateur du salon.',
   reglages: 'Réglages invalides.',
-  pas_assez: `Il faut au moins ${MIN_PLAYERS} joueurs.`,
+  pas_assez: 'Il faut au moins un joueur.',
   pas_en_jeu: "Aucune partie en cours.",
   pas_finie: "La partie n'est pas terminée.",
   trop_rapide: 'Une tentative par seconde.',
