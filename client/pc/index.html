@@ -1,0 +1,805 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mots Cultes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#14162B; --panel:#1F2240; --panel2:#2B2F52; --line:#3A3E63;
+  --text:#F4F4F8; --muted:#A9ADCB;
+  --def:#E9E4D4; --def-ink:#4A4537; --filler:#2B2F52; --hard:#DC2626;
+  --sel:#FEF3C7; --sel-ring:#D97706; --act:#FDE68A; --act-ring:#92400E;
+  --gold:#E8B04A; --myst:#B45309;
+  --cell:60px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:'Space Grotesk',system-ui,-apple-system,sans-serif}
+button,input{font-family:inherit;color:inherit}
+button:focus-visible,input:focus-visible{outline:2px solid #8B93FF;outline-offset:2px}
+.screen{display:none;height:100vh}
+.screen.on{display:block}
+.eyebrow{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.btn{height:44px;border:0;border-radius:10px;background:var(--panel2);font-size:15px;font-weight:600;cursor:pointer;padding:0 16px}
+.btn:hover{filter:brightness(1.12)}
+.btn.primary{background:#FACC15;color:#1F2937;font-weight:700}
+.btn.ghost{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
+.btn.sm{height:34px;font-size:13px;padding:0 12px}
+.btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.card{background:var(--panel);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.card h2{font-size:12px;margin:0;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;font-weight:600}
+.dot{width:10px;height:10px;border-radius:50%;flex:none;display:inline-block}
+.note{font-size:12px;color:var(--muted);line-height:1.45;margin:0}
+kbd{font-family:inherit;font-size:11px;background:var(--panel2);border-radius:4px;padding:1px 6px;border:1px solid var(--line)}
+
+/* ---------- Salon ---------- */
+#scrLobby{overflow-y:auto}
+.lobby{max-width:960px;margin:0 auto;padding:40px 24px;display:flex;flex-direction:column;gap:20px}
+.lobby h1{font-size:36px;margin:4px 0 0}
+.lobby .sub{color:var(--muted);font-size:15px;margin:6px 0 0}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+@media (max-width:760px){.cols{grid-template-columns:1fr}}
+.codebox{display:flex;align-items:baseline;justify-content:space-between}
+.codebox .code{font-size:34px;font-weight:700;letter-spacing:.18em}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:14px;font-weight:500}
+.field input[type=text],.field input[type=number]{height:44px;border-radius:10px;border:0;background:var(--panel2);font-size:16px;padding:0 14px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.stepper{display:flex;align-items:center;gap:10px}
+.stepper button{width:40px;height:40px;border-radius:10px;border:0;background:var(--panel2);font-size:20px;cursor:pointer}
+.stepper span{min-width:18px;text-align:center;font-size:18px;font-weight:700}
+.bots{display:flex;gap:6px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;background:var(--panel2);border-radius:999px;padding:5px 10px}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;background:var(--panel2);border-radius:10px;padding:4px}
+.seg button{height:36px;border:0;border-radius:7px;background:transparent;font-size:14px;font-weight:600;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed=true]{background:#F4F4F8;color:#14162B}
+.theme{display:grid;grid-template-columns:120px 1fr 48px;align-items:center;gap:12px}
+.theme label{font-size:14px}
+.rules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.rules{grid-template-columns:1fr}}
+.theme output{text-align:right;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:#FACC15}
+
+/* ---------- Jeu ---------- */
+.game{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;height:100vh;padding:20px 24px;max-width:1500px;margin:0 auto}
+.board{min-width:0;min-height:0;display:flex;align-items:center;justify-content:center}
+.grid{display:grid;grid-template-columns:repeat(10,var(--cell));grid-auto-rows:var(--cell);gap:1px;padding:1px;background:#4A4F7A;border-radius:4px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.grid.shake{animation:shake .35s ease}
+@keyframes shake{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+.cell{border:0;padding:0;margin:0;position:relative;display:flex;align-items:center;justify-content:center;background:#fff;cursor:pointer;font-weight:700;font-size:calc(var(--cell) * .54);line-height:1;overflow:hidden}
+.cell.let:hover{filter:brightness(.96)}
+.cell .l{position:relative;z-index:2}
+.cell .wm{position:absolute;left:14%;top:14%;width:72%;height:72%;fill:rgba(15,23,42,.13);z-index:1;pointer-events:none}
+.cell .mc{position:absolute;inset:8%;border-radius:50%;border:2px solid var(--myst);z-index:1;pointer-events:none}
+.cell .mn{position:absolute;right:3px;bottom:2px;font-size:calc(var(--cell) * .18);color:#92400E;font-weight:700;z-index:2;pointer-events:none}
+.cell.flash{animation:pop .6s ease}
+@keyframes pop{0%{transform:scale(.55);filter:brightness(1.5)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
+.cell.def{background:var(--def);color:var(--def-ink);flex-direction:column;align-items:stretch;justify-content:stretch;font-weight:500;cursor:pointer}
+.cell.def.hard{background:var(--hard);color:#fff}
+.cell.filler{background:var(--filler);cursor:default}
+.dq{flex:1 1 0;min-height:0;position:relative;display:flex;align-items:center;justify-content:center;padding:2px 3px 2px 3px}
+.dq + .dq{border-top:1px solid rgba(0,0,0,.18)}
+.cell.def.hard .dq + .dq{border-top-color:rgba(255,255,255,.35)}
+.dq .tx{font-size:calc(var(--cell) * .135);line-height:1.12;text-align:center;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:5;word-break:break-word;hyphens:auto}
+.cell.def.two .dq .tx{-webkit-line-clamp:2}
+.dq .ar{position:absolute;width:calc(var(--cell) * .2);height:calc(var(--cell) * .2)}
+.dq.r .ar{right:0;top:50%;transform:translateY(-50%)}
+.dq.d .ar{bottom:0;left:50%;transform:translateX(-50%)}
+.dq.r{padding-right:calc(var(--cell) * .16)}
+.dq.d{padding-bottom:calc(var(--cell) * .14)}
+.dq.done{opacity:.38}
+.dq.on{box-shadow:inset 0 0 0 3px var(--act-ring)}
+
+.side{min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding-right:2px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.top .c{font-size:18px;font-weight:700}
+.timer{display:flex;align-items:center;gap:6px;background:var(--panel);border-radius:999px;padding:8px 14px;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
+.menuwrap{position:relative}
+.menu{position:absolute;right:0;top:48px;background:#0B0C18;border:1px solid var(--line);border-radius:12px;padding:6px;display:flex;flex-direction:column;z-index:7;min-width:250px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.menu[hidden]{display:none}
+.menu button{height:40px;border:0;background:transparent;text-align:left;padding:0 12px;border-radius:8px;font-size:14px;cursor:pointer}
+.menu button:hover{background:var(--panel)}
+.menu .sep{height:1px;background:var(--line);margin:4px 6px}
+.menu .t{font-size:11px;color:var(--muted);padding:6px 12px 2px;letter-spacing:.06em;text-transform:uppercase}
+
+.scores{display:flex;flex-direction:column;gap:6px}
+.srow{display:grid;grid-template-columns:22px 1fr auto;align-items:center;gap:10px;background:var(--panel2);border-radius:10px;padding:8px 12px}
+.srow.me{box-shadow:inset 0 0 0 1.5px #8B93FF}
+.srow .rk{font-weight:700;color:var(--muted)}
+.srow .nm{display:flex;align-items:center;gap:8px;min-width:0;font-weight:600}
+.srow .nm small{color:var(--muted);font-weight:400}
+.srow .sc{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.srow.bump .sc{animation:bump .5s ease}
+@keyframes bump{40%{transform:scale(1.25);color:#FACC15}}
+
+.cluebox .hd{display:flex;align-items:center;gap:10px}
+.cluebox .ic{width:34px;height:34px;border-radius:8px;background:var(--panel2);display:flex;align-items:center;justify-content:center;flex:none}
+.cluebox .ic.hard{background:var(--hard)}
+.cluebox .clue{font-size:20px;font-weight:500;line-height:1.25;min-height:50px}
+.cluebox .meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.cluebox .meta .len{font-size:13px;color:var(--muted)}
+.badge{font-size:11px;font-weight:700;border-radius:5px;padding:3px 7px;white-space:nowrap}
+.badge.hard{background:var(--hard);color:#fff}
+.badge.tw{background:#F4F4F8;color:#14162B}
+.badge.vg{background:#14532D;color:#BBF7D0}
+.cluebox .acts{display:flex;gap:8px}
+.cluebox .acts .btn{flex:1}
+.notice{min-height:20px;font-size:13px;color:var(--muted)}
+.notice.err{color:#FCA5A5}
+.notice.ok{color:#86EFAC}
+
+.mslots{display:flex;gap:4px;flex-wrap:wrap}
+.mslot{width:28px;height:34px;border-radius:6px;border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#FDE68A}
+.mslot.f{background:#3B2F12}
+.prog{height:8px;background:var(--panel2);border-radius:4px;position:relative;overflow:visible}
+.prog i{display:block;height:100%;background:var(--gold);border-radius:4px;transition:width .3s}
+.prog b{position:absolute;left:80%;top:-4px;bottom:-4px;width:2px;background:#F4F4F8}
+.mcard.on{box-shadow:inset 0 0 0 2px var(--gold)}
+.mslot.cur{box-shadow:0 0 0 2px #F4F4F8}
+.mslot.g{color:rgba(253,230,138,.35)}
+.mslot.t{background:#5B4515;color:#FFFFFF}
+.mslot.ok{background:#14532D;border-color:#22C55E;color:#BBF7D0}
+.mslot.ko{border-color:#DC2626}
+.mres{font-size:14px;font-weight:600;border-radius:8px;padding:8px 10px}
+.mres.ok{background:#14532D;color:#BBF7D0}
+.mres.ko{background:#450A0A;color:#FCA5A5}
+.mbtns{display:flex;gap:8px}
+.mbtns .btn{flex:1}
+.mform{display:flex;gap:8px}
+.finalbox{background:#3B1D0A;box-shadow:inset 0 0 0 2px #F97316}
+.finalbox[hidden]{display:none}
+.finalbox h2{color:#FDBA74}
+.finalbox .big{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;color:#FDBA74}
+.finalbox p{margin:0;font-size:14px;line-height:1.4}
+.timer.hot{background:#7C2D12;color:#FED7AA}
+.answer{display:flex;gap:4px;flex-wrap:wrap}
+.answer span{width:30px;height:36px;border-radius:6px;background:#F4F4F8;color:#14162B;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700}
+.who{display:flex;align-items:center;gap:8px;font-size:14px}
+.recap .reason{font-size:15px;color:#FDE68A;margin:0}
+.mform input{flex:1;min-width:0;height:40px;border-radius:10px;border:0;background:var(--panel2);font-size:16px;padding:0 12px;text-transform:uppercase;letter-spacing:.1em}
+.mform input:disabled{opacity:.5}
+
+.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto}
+.feed li{display:grid;grid-template-columns:10px 40px 1fr;gap:8px;align-items:baseline;font-size:13px;line-height:1.35}
+.feed li .dot{transform:translateY(1px)}
+.feed li .t{color:var(--muted);font-variant-numeric:tabular-nums}
+.legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px;font-size:12px;color:#C9CCE4}
+.legend span{display:flex;align-items:center;gap:8px}
+.legend .sw{width:22px;height:22px;border-radius:4px;flex:none;position:relative;display:flex;align-items:center;justify-content:center}
+.keys{font-size:12px;color:var(--muted);line-height:1.9}
+
+/* ---------- Récap ---------- */
+#scrRecap{overflow-y:auto}
+.recap{max-width:1200px;margin:0 auto;padding:32px 24px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:900px){.recap{grid-template-columns:1fr}}
+.recap h1{font-size:34px;margin:4px 0 0}
+.recap .col{display:flex;flex-direction:column;gap:14px}
+.recap .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.recap .stat{background:var(--panel);border-radius:12px;padding:12px 14px}
+.recap .stat b{display:block;font-size:22px;margin-top:2px}
+.rank{background:var(--panel);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.rank.me{box-shadow:inset 0 0 0 1.5px #8B93FF}
+.rank .hd{display:flex;align-items:center;gap:10px}
+.rank .pos{width:32px;height:32px;border-radius:8px;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-weight:700}
+.rank .pos.p1{background:#FACC15;color:#1F2937}
+.rank .nm{flex:1;font-size:17px;font-weight:600;display:flex;align-items:center;gap:8px}
+.rank .tot{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.rank table{width:100%;border-collapse:collapse;font-size:14px}
+.rank td{padding:3px 0;color:#C9CCE4}
+.rank td:last-child{text-align:right;color:var(--text);font-variant-numeric:tabular-nums}
+.final{display:grid;grid-template-columns:repeat(10,32px);grid-auto-rows:32px;gap:1px;background:#4A4F7A;padding:1px;border-radius:3px;align-self:center}
+.final i{display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:700;font-size:16px}
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar{display:grid;grid-template-columns:120px 1fr 80px;align-items:center;gap:10px;font-size:13px}
+.bar .tr{height:8px;background:var(--panel2);border-radius:4px;overflow:hidden}
+.bar .tr i{display:block;height:100%;background:#FACC15}
+.bar .v{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.loading{position:fixed;inset:0;background:rgba(20,22,43,.85);display:flex;align-items:center;justify-content:center;font-size:18px;z-index:20}
+.loading[hidden]{display:none}
+
+/* ---------- Définitions de la communauté ---------- */
+#scrEditor,#scrModo{overflow-y:auto}
+.ed{max-width:1100px;margin:0 auto;padding:32px 24px 40px;display:flex;flex-direction:column;gap:18px}
+.ed h1{font-size:32px;margin:4px 0 0}
+.ed .sub{color:var(--muted);font-size:15px;margin:6px 0 0}
+.edcols{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.edcols{grid-template-columns:1fr}}
+.edside{display:flex;flex-direction:column;gap:20px}
+.field select,.field textarea{border-radius:10px;border:0;background:var(--panel2);font-size:16px;padding:10px 14px;color:var(--text);font-family:inherit}
+.field select{height:44px}
+.field textarea{resize:vertical;line-height:1.4}
+.hint{font-size:12px;color:var(--muted);min-height:16px;line-height:1.35}
+.hint.err{color:#FCA5A5}
+.hint.warn,.warntxt{color:#FDE68A}
+.count{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.count.near{color:#FDE68A}
+.seg4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.msg{font-size:14px;min-height:20px}
+.msg.ok{color:#86EFAC}
+.msg.err{color:#FCA5A5}
+.pv{display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap}
+.pv figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:6px}
+.pv figcaption{font-size:11px;color:var(--muted)}
+.pvcell{--cell:72px;width:72px;height:72px;border-radius:3px;overflow:hidden;box-shadow:0 0 0 1px #4A4F7A}
+.pvcell .cell{width:100%;height:100%;cursor:default}
+.pvcell.small{--cell:60px;width:60px;height:60px;flex:none}
+.pvword{display:flex;gap:1px;background:#4A4F7A;padding:1px;border-radius:3px}
+.pvword span{width:30px;height:30px;background:#fff;color:#1F2937;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px}
+.mine{display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto}
+.mrow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 10px;background:var(--panel2);border-radius:10px;padding:8px 10px;font-size:14px}
+.mrow .full{flex-basis:100%}
+.st{font-size:11px;font-weight:700;border-radius:5px;padding:3px 7px;white-space:nowrap}
+.st.pending{background:#3B2F12;color:#FDE68A}
+.st.approved{background:#14532D;color:#BBF7D0}
+.st.rejected{background:#450A0A;color:#FCA5A5}
+.molist{display:flex;flex-direction:column;gap:12px}
+.mohead{display:flex;gap:16px;align-items:flex-start}
+.mobody{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.answ{font-size:18px;font-weight:700;letter-spacing:.12em;background:#F4F4F8;color:#14162B;border-radius:6px;padding:2px 9px}
+.moclue{font-size:18px;font-weight:500}
+.moexpl{margin:0;font-size:14px;line-height:1.45;color:#C9CCE4}
+.moacts{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px}
+.moacts .field span{font-size:12px;color:var(--muted)}
+.moacts .grow{flex:1;min-width:200px}
+.moacts input{height:36px;border-radius:8px;border:0;background:var(--panel2);font-size:14px;padding:0 10px;width:100%}
+.moacts select{height:36px;padding:0 10px;font-size:14px}
+.btn.danger{color:#FCA5A5;box-shadow:inset 0 0 0 1.5px #7F1D1D}
+.filebtn{display:inline-flex;align-items:center}
+.badge.d-facile{background:#14532D;color:#BBF7D0}
+.badge.d-moyen{background:#1E3A8A;color:#BFDBFE}
+.badge.d-difficile{background:var(--hard);color:#fff}
+.badge.d-expert{background:#4C0519;color:#FECDD3;box-shadow:inset 0 0 0 1px #FB7185}
+.expl{font-size:14px;line-height:1.45;color:#C9CCE4;background:var(--panel2);border-radius:10px;padding:10px 12px}
+.expl b{color:var(--text)}
+.ed.wide{max-width:1400px}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.filters .field span,.trow .field span{font-size:12px;color:var(--muted)}
+.filters input,.filters select{height:40px;border-radius:9px;border:0;background:var(--panel2);font-size:14px;padding:0 10px;color:var(--text);font-family:inherit}
+.filters .grow{flex:1;min-width:220px}
+.tablewrap{overflow-x:auto;background:var(--panel);border-radius:14px}
+.dbt{width:100%;border-collapse:collapse;font-size:14px;min-width:980px}
+.dbt th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:12px 12px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel)}
+.dbt td{padding:9px 12px;border-bottom:1px solid #2A2E50;vertical-align:top}
+.dbt td:first-child{white-space:nowrap}
+.dbt td small{margin-left:6px}
+.dbt .note{font-size:12px;margin-top:2px}
+.dbt select{height:32px;border-radius:7px;border:0;background:var(--panel2);color:var(--text);font-size:13px;padding:0 8px;font-family:inherit;max-width:170px}
+.answ.sm{font-size:13px;padding:1px 6px;letter-spacing:.08em}
+.themelist{display:flex;flex-direction:column;gap:10px}
+.trow{flex-direction:row;align-items:center;gap:14px;flex-wrap:wrap}
+.trow .grow{flex:1;min-width:240px;display:flex;flex-direction:column;gap:4px}
+.trow.off{opacity:.6}
+.tname{height:38px;border-radius:9px;border:0;background:var(--panel2);font-size:16px;font-weight:600;padding:0 12px;color:var(--text);max-width:320px;font-family:inherit}
+.tgl{display:inline-flex;align-items:center;gap:8px;font-size:14px;cursor:pointer}
+.tgl input{width:20px;height:20px;accent-color:#FACC15}
+.hint.ok{color:#86EFAC}
+.field[hidden]{display:none}
+.dbt td.acts{white-space:nowrap;text-align:right}
+.dbt tr.gone td{opacity:.5}
+.dbt tr.gone td.acts{opacity:1}
+.tag{display:inline-block;font-size:10.5px;font-weight:600;background:#312E81;color:#C7D2FE;border-radius:4px;padding:1px 6px;margin-top:3px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.modalwrap{position:fixed;inset:0;background:rgba(5,6,14,.7);display:flex;align-items:center;justify-content:center;z-index:80;padding:20px}
+.modalwrap[hidden]{display:none}
+.modal{width:100%;max-width:760px;max-height:calc(100vh - 40px);overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.modal h2{font-size:20px;margin:0;color:var(--text);letter-spacing:0;text-transform:none}
+.mgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px}
+.mgrid .full{grid-column:1 / -1}
+.modal .field input[type=text]{height:42px}
+.modal .foot{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:14px}
+.modal .foot .grow{flex:1}
+.btn.danger.armed{background:#7F1D1D;color:#fff;box-shadow:none}
+.origin{font-size:12px;color:var(--muted);background:var(--panel2);border-radius:8px;padding:8px 10px;line-height:1.45}
+#adNewTheme .row{justify-content:flex-start}
+#adNewTheme .grow{flex:1;max-width:520px}
+.theme label small{display:block;font-size:11px;color:var(--muted)}
+.rolebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px;flex-basis:100%}
+.rolebar .seg{flex:1;max-width:420px}
+.defsbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+/* ---------- Client connecté ---------- */
+[hidden]{display:none!important}
+a{color:#FDE68A}
+.netbar{position:fixed;top:0;left:0;right:0;z-index:30;background:#7C2D12;color:#FFEDD5;text-align:center;font-size:14px;font-weight:600;padding:8px 16px}
+.home{max-width:760px}
+.codein{text-transform:uppercase;letter-spacing:.3em;font-weight:700}
+.share{display:flex;gap:8px}
+.share input{flex:1;min-width:0;height:34px;border-radius:8px;border:0;background:var(--panel2);font-size:13px;padding:0 10px;color:var(--muted)}
+.players{display:flex;gap:6px;flex-wrap:wrap}
+.pill small{color:var(--muted);font-size:11px}
+.pill.off,.srow.off{opacity:.5}
+.field input:disabled,.seg button:disabled,input[type=range]:disabled{opacity:.6;cursor:not-allowed}
+.seg button[aria-pressed=true]:disabled{opacity:1}
+</style>
+</head>
+<body>
+<div class="netbar" id="netbar" hidden>Connexion perdue, reconnexion en cours…</div>
+
+<!-- ===================== ACCUEIL ===================== -->
+<section class="screen on" id="scrHome" aria-label="Accueil">
+<div class="lobby home">
+  <div>
+    <span class="eyebrow">Mots fléchés pop culture · multijoueur</span>
+    <h1>Mots Cultes</h1>
+    <p class="sub">Remplissez la même grille à plusieurs, en temps réel. Chaque mot rapporte des points au premier qui le trouve.</p>
+  </div>
+  <div class="card">
+    <div class="field">
+      <label for="hPseudo">Ton pseudo</label>
+      <input type="text" id="hPseudo" maxlength="12" autocomplete="nickname" placeholder="12 caractères maximum">
+    </div>
+  </div>
+  <div class="cols">
+    <div class="card">
+      <h2>Nouveau salon</h2>
+      <p class="note">Tu règles la partie et tu partages le code avec les autres joueurs (2 à 8).</p>
+      <button class="btn primary" type="button" id="hCreate">Créer un salon</button>
+    </div>
+    <form class="card" id="hJoinForm" autocomplete="off">
+      <h2>Rejoindre un salon</h2>
+      <div class="field">
+        <label for="hCode">Code du salon</label>
+        <input type="text" id="hCode" maxlength="4" placeholder="ex. K7QF" class="codein">
+      </div>
+      <button class="btn" type="submit" id="hJoin">Rejoindre</button>
+    </form>
+  </div>
+  <p class="notice err" id="hMsg" role="alert"></p>
+  <p class="note">Sur téléphone : <a href="/mobile/">version mobile</a>, installable sur l'écran d'accueil.</p>
+  <p class="note">Proposer des définitions, modérer, administrer : en attendant leur branchement sur le serveur, ces écrans restent dans le <a href="/proto/pc/">prototype hors ligne</a>.</p>
+</div>
+</section>
+
+<!-- ===================== SALON ===================== -->
+<section class="screen" id="scrLobby" aria-label="Salon">
+<div class="lobby">
+  <div class="row" style="align-items:flex-end">
+    <div>
+      <span class="eyebrow">Salon privé</span>
+      <h1>Salon <span id="lCodeTitle">----</span></h1>
+      <p class="sub" id="lSub"></p>
+    </div>
+    <button class="btn ghost" type="button" id="lLeave">Quitter le salon</button>
+  </div>
+  <div class="cols">
+    <div class="card">
+      <div class="codebox"><h2>Code du salon</h2><span class="code" id="lCode">----</span></div>
+      <div class="share">
+        <input type="text" id="lLink" readonly aria-label="Lien d'invitation">
+        <button class="btn sm" type="button" id="lCopy">Copier le lien</button>
+      </div>
+      <div class="field">
+        <label>Joueurs <span class="note" id="lCount"></span></label>
+        <div class="players" id="lPlayers"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Dosage des thèmes</h2>
+      <div id="lThemes" style="display:flex;flex-direction:column;gap:10px"></div>
+      <p class="note">Les pourcentages portent sur les mots pop culture. Les petits mots de remplissage ne comptent pas.</p>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Mode de jeu</h2>
+    <div class="seg" role="group" aria-label="Mode de jeu" id="lMode" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+      <button type="button" data-v="classique">Classique</button>
+      <button type="button" data-v="derniere_chance">Dernière chance</button>
+    </div>
+    <p class="note" id="lModeNote"></p>
+    <div class="field" id="lLastWrap" style="max-width:280px">
+      <label for="lLastTime">Temps pour la dernière tentative (secondes)</label>
+      <input type="number" id="lLastTime" min="5" max="120" step="5">
+    </div>
+  </div>
+  <div class="card">
+    <h2>Règles de score</h2>
+    <div class="rules">
+      <div class="field"><label for="lStartScore">Score de départ</label><input type="number" id="lStartScore" min="0" max="1000" step="10"></div>
+      <div class="field"><label for="lPenWord">Pénalité mot faux</label><input type="number" id="lPenWord" min="0" max="500" step="5"></div>
+      <div class="field"><label for="lPenMyst">Pénalité mot mystère faux</label><input type="number" id="lPenMyst" min="0" max="500" step="5"></div>
+    </div>
+    <p class="note">Tous les joueurs partent avec le même score, qui ne descend jamais sous zéro. Gains : 10 pts par lettre, ×2 si la définition est difficile, +20 mot vierge, +20 par jumelle, +100 mot mystère.</p>
+  </div>
+  <p class="notice err" id="lMsg" role="alert"></p>
+  <button class="btn primary" id="lStart" type="button" style="height:52px;font-size:17px">Lancer la partie</button>
+</div>
+</section>
+
+<!-- ===================== JEU ===================== -->
+<section class="screen" id="scrGame" aria-label="Partie">
+<div class="game">
+  <div class="board" id="gBoard">
+    <div class="grid" id="gGrid" role="grid" aria-label="Grille de mots fléchés"></div>
+  </div>
+  <aside class="side">
+    <div class="top">
+      <div><span class="eyebrow">Salon privé</span><div class="c" id="gCode">Code ----</div></div>
+      <div class="timer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M9 2h6"/></svg><span id="gTimer">00:00</span></div>
+      <div class="menuwrap">
+        <button class="btn sm ghost" id="gMenuBtn" aria-expanded="false" type="button">Menu ▾</button>
+        <div class="menu" id="gMenu" hidden>
+          <button type="button" data-act="leave">Quitter la partie</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card finalbox" id="gFinal" hidden></div>
+    <div class="card"><h2>Scores</h2><div class="scores" id="gScores"></div></div>
+
+    <div class="card cluebox" id="gClue"></div>
+
+    <div class="card mcard" id="gMCard">
+      <div class="row"><h2>Mot mystère</h2><span class="note" id="gMPct">0 %</span></div>
+      <div class="mslots" id="gMSlots"></div>
+      <div class="prog" title="Ouverture à 80 %"><i id="gMBar" style="width:0%"></i><b></b></div>
+      <div id="gMAct"></div>
+      <p class="note" id="gMNote"></p>
+    </div>
+
+    <div class="card"><h2>Fil de la partie</h2><ul class="feed" id="gFeed"></ul></div>
+
+    <div class="card">
+      <h2>Légende</h2>
+      <div class="legend">
+        <span><span class="sw" style="background:#fff"><svg viewBox="0 0 24 24" width="18" height="18" style="fill:rgba(15,23,42,.35)" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.5L12 17.2 6.1 20.5l1.3-6.5L2.5 9.4l6.6-.8z"/></svg></span>Case jumelle ★</span>
+        <span><span class="sw" style="background:#fff"><svg viewBox="0 0 24 24" width="18" height="18" style="fill:rgba(15,23,42,.35)" aria-hidden="true"><path d="M12 1.5l9.5 10.5L12 22.5 2.5 12z"/></svg></span>Case jumelle ◆</span>
+        <span><span class="sw" style="background:#fff"><span style="position:absolute;inset:2px;border-radius:50%;border:2px solid var(--myst)"></span></span>Lettre du mot mystère</span>
+        <span><span class="sw" style="background:var(--hard)"></span>Définition difficile ×2</span>
+      </div>
+      <div class="keys"><kbd>A</kbd>–<kbd>Z</kbd> écrire · <kbd>Entrée</kbd> valider · <kbd>⌫</kbd> effacer<br><kbd>Tab</kbd> / <kbd>Maj+Tab</kbd> mot suivant / précédent · <kbd>Espace</kbd> changer de sens · <kbd>←</kbd> <kbd>→</kbd> déplacer le curseur<br><kbd>Échap</kbd> quitter la saisie du mot mystère</div>
+    </div>
+  </aside>
+</div>
+</section>
+
+<!-- ===================== RÉCAP ===================== -->
+<section class="screen" id="scrRecap" aria-label="Récapitulatif"><div class="recap" id="recap"></div></section>
+
+<div class="loading" id="loading" hidden>Génération de la grille…</div>
+
+<script src="/socket.io/socket.io.min.js"></script>
+<script src="/shared/core.js"></script>
+<script>
+'use strict';
+/* =====================================================================
+   Client PC : affichage. La logique commune est dans /shared/core.js.
+   L'interface reprend celle du prototype (prototypes/pc/index.html).
+   ===================================================================== */
+let mNoteMsg = '', mNoteTimer = null;
+function mNote(msg) {
+  mNoteMsg = msg;
+  clearTimeout(mNoteTimer);
+  mNoteTimer = setTimeout(() => { mNoteMsg = ''; if (S) renderMystery(); }, 3000);
+  renderMystery();
+}
+
+function render() {
+  if (!S || !G) return;
+  renderGrid();
+  renderFinal();
+  renderScores();
+  renderClue();
+  renderMystery();
+}
+
+
+function renderFinal() {
+  const el = $('#gFinal');
+  if (!S.final || S.over) { el.hidden = true; $('.timer').classList.remove('hot'); return; }
+  el.hidden = false;
+  $('.timer').classList.add('hot');
+  const left = Math.max(0, Math.ceil((S.final.endsAt - serverNow()) / 1000));
+  const by = P(S.final.by).pseudo;
+  const waiting = [...S.final.pending].map(id => esc(P(id).pseudo)).join(', ');
+  let msg;
+  if (S.final.by === me) msg = 'Tu as trouvé le mot mystère ! Les autres jouent leur dernière tentative.';
+  else if (S.final.pending.has(me)) msg = `<b>${esc(by)}</b> a trouvé le mot mystère. Tu as droit à <b>un seul essai</b> : un mot de la grille ou le mot mystère.`;
+  else msg = 'Ta dernière tentative est jouée.';
+  el.innerHTML = `<div class="row"><h2>Dernière chance</h2><span class="big">${left} s</span></div><p>${msg}</p>${waiting ? `<p class="note">En attente : ${waiting}</p>` : ''}`;
+}
+
+function renderScores() {
+  if (!S || !room) return;
+  const list = room.players.slice().sort((a, b) => (S.scores[b.id] ?? 0) - (S.scores[a.id] ?? 0));
+  const now = Date.now();
+  $('#gScores').innerHTML = list.map((p, i) => {
+    const n = S.found.filter(f => f === p.id).length;
+    return `<div class="srow${p.id === me ? ' me' : ''}${p.online ? '' : ' off'}${S.bump[p.id] && now - S.bump[p.id] < 400 ? ' bump' : ''}">
+      <span class="rk">${i + 1}</span>
+      <span class="nm"><span class="dot" style="background:${p.color}"></span>${esc(p.pseudo)} <small>${n} mot${n > 1 ? 's' : ''}${p.online ? '' : ' · déconnecté'}</small></span>
+      <span class="sc">${S.scores[p.id] ?? 0}</span></div>`;
+  }).join('');
+}
+
+let noticeMsg = '', noticeKind = '', noticeTimer = null;
+function notice(msg, kind) {
+  noticeMsg = msg; noticeKind = kind || '';
+  clearTimeout(noticeTimer);
+  noticeTimer = setTimeout(() => { noticeMsg = ''; if (S) renderClue(); }, 3000);
+  if (S) renderClue();
+}
+
+function renderClue() {
+  const el = $('#gClue');
+  if (S.review) { renderReviewClue(el); return; }
+  if (S.over) { el.innerHTML = '<h2>Définition</h2><div class="clue">Partie terminée !</div>'; return; }
+  if (S.mode === 'mystery') { el.innerHTML = `<h2>Mot mystère</h2><div class="clue">Ta saisie va dans le mot mystère. Entrée pour valider, Échap pour revenir à la grille.</div><div class="notice ${noticeKind}" role="status">${esc(noticeMsg)}</div>`; return; }
+  if (S.sel.w == null) { el.innerHTML = `<h2>Définition</h2><div class="clue">Clique sur une case pour choisir un mot.</div><div class="notice ${noticeKind}" role="status">${esc(noticeMsg)}</div>`; return; }
+  const w = G.words[S.sel.w];
+  const anyFilled = w.cells.some(k => S.fill[k] != null);
+  const twinsIn = [...new Set(w.cells.filter(k => G.twinOf[k] && S.fill[k] == null).map(k => G.twinOf[k].pair))];
+  const badges = [];
+  if (w.hard) badges.push('<span class="badge hard">Difficile ×2</span>');
+  twinsIn.forEach(p => badges.push(`<span class="badge tw">Jumelle ${TWIN_SYM[p]} +${PRIME_TWIN}</span>`));
+  if (!anyFilled) badges.push(`<span class="badge vg">Vierge +${BONUS_VIERGE}</span>`);
+  const arrow = w.dir === 'h'
+    ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15"/><path d="M14 7l5 5-5 5"/></svg>'
+    : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v15"/><path d="M7 14l5 5 5-5"/></svg>';
+  const lockedNote = locked(me) ? '<p class="note">Ta dernière tentative est jouée : tu ne peux plus rien saisir.</p>' : '';
+  el.innerHTML = `
+    <div class="hd"><span class="ic${w.hard ? ' hard' : ''}">${arrow}</span><h2>${w.dir === 'h' ? 'Horizontal' : 'Vertical'}</h2></div>
+    <div class="clue">${esc(w.clue)}</div>
+    <div class="meta"><span class="len">${w.len} lettres · ${wordBase(w)} pts</span>${badges.join('')}</div>
+    <p class="note">Tape le mot en entier, lettres déjà posées comprises. Erreur : −${room.settings.penWord} pts.</p>
+    ${lockedNote}
+    <div class="acts">
+      <button class="btn sm ghost" type="button" data-a="prev" aria-label="Mot précédent">‹ Précédent</button>
+      <button class="btn sm ghost" type="button" data-a="clear">Effacer</button>
+      <button class="btn sm ghost" type="button" data-a="next" aria-label="Mot suivant">Suivant ›</button>
+    </div>
+    <button class="btn primary" type="button" data-a="ok"${locked(me) ? ' disabled' : ''}>Valider <span style="opacity:.6;font-weight:500">(Entrée)</span></button>
+    <div class="notice ${noticeKind}" role="status">${esc(noticeMsg)}</div>`;
+}
+
+function renderReviewClue(el) {
+  const w = G.words[S.sel.w];
+  const pid = S.found[S.sel.w];
+  const who = pid
+    ? `<div class="who"><span class="dot" style="background:${P(pid).color}"></span>${S.how[S.sel.w] === 'trouvé' ? 'Trouvé' : 'Complété (' + S.how[S.sel.w] + ')'} par <b>${esc(P(pid).pseudo)}</b></div>`
+    : `<div class="who"><span class="dot" style="background:#94A3B8"></span>Personne ne l'a trouvé</div>`;
+  el.innerHTML = `
+    <h2>Revoir la grille · ${w.dir === 'h' ? 'Horizontal' : 'Vertical'}</h2>
+    <div class="clue">${esc(w.clue)}</div>
+    <div class="answer">${[...w.ans].map(ch => `<span>${ch}</span>`).join('')}</div>
+    <div class="meta"><span class="len">${w.len} lettres · ${wordBase(w)} pts</span>${w.diff ? `<span class="badge d-${esc(w.diff)}">${esc(DIFF_LABELS[w.diff] || w.diff)}</span>` : (w.hard ? '<span class="badge hard">Difficile ×2</span>' : '')}</div>
+    ${w.expl ? `<div class="expl"><b>Explication :</b> ${esc(w.expl)}</div>` : ''}
+    ${w.author ? `<p class="note">Définition proposée par ${esc(w.author)}</p>` : ''}
+    ${who}
+    <div class="acts">
+      <button class="btn sm ghost" type="button" data-a="prev">‹ Précédent</button>
+      <button class="btn sm ghost" type="button" data-a="next">Suivant ›</button>
+    </div>
+    <button class="btn primary" type="button" data-a="back">Retour au récapitulatif <span style="opacity:.6;font-weight:500">(Échap)</span></button>`;
+}
+
+function renderMystery() {
+  const card = $('#gMCard');
+  card.hidden = !G.myst;
+  if (!G.myst) return;
+  const st = S.you, n = G.myst.len;
+  const typing = S.mode === 'mystery';
+  if (S.review) {
+    card.classList.remove('on');
+    $('#gMSlots').innerHTML = [...G.myst.ans].map(ch => `<span class="mslot ok">${ch}</span>`).join('');
+    const finders = (S.ranking || []).filter(p => p.mOk).map(p => esc(p.pseudo));
+    $('#gMAct').innerHTML = '';
+    $('#gMNote').textContent = finders.length ? 'Trouvé par ' + finders.join(', ') + '.' : 'Personne ne l’a trouvé.';
+    return;
+  }
+  card.classList.toggle('on', typing);
+  $('#gMSlots').innerHTML = G.myst.cells.map((k, i) => {
+    const known = S.fill[k] != null ? (S.L[k] || '') : '';
+    if (typing) {
+      const t = S.mTyped[i];
+      return `<span class="mslot${t ? ' t' : (known ? ' g' : '')}${i === S.mTyped.length ? ' cur' : ''}">${t || known}</span>`;
+    }
+    if (st.mOk) return `<span class="mslot ok">${st.mGuess[i] || ''}</span>`;
+    if (st.mAttempt) return `<span class="mslot ko">${(st.mGuess || '')[i] || ''}</span>`;
+    return `<span class="mslot${known ? ' f' : ''}">${known}</span>`;
+  }).join('');
+  const pct = fillPct();
+  $('#gMPct').textContent = `${pct} % rempli`;
+  $('#gMBar').style.width = pct + '%';
+
+  let act = '', note = '';
+  if (st.mAttempt) {
+    act = st.mOk
+      ? `<div class="mres ok">Ta proposition ${esc(st.mGuess)} est juste ! +${BONUS_MYST} points</div>`
+      : `<div class="mres ko">Ta proposition ${esc(st.mGuess || '')} est fausse. −${st.mLost || 0} points</div>`;
+    note = 'Une seule proposition par joueur.';
+  } else if (typing) {
+    act = `<div class="mbtns"><button class="btn sm ghost" type="button" data-m="cancel">Annuler (Échap)</button><button class="btn sm primary" type="button" data-m="ok">Valider (Entrée)</button></div>`;
+    note = `Tape les ${n} lettres au clavier. Les lettres déjà visibles sont en filigrane : tape le mot en entier.`;
+  } else if (locked(me)) {
+    act = `<button class="btn" type="button" disabled style="width:100%">Proposer le mot mystère</button>`;
+    note = 'Ta dernière tentative est jouée.';
+  } else if (pct >= MYST_THRESHOLD && !S.over) {
+    act = `<button class="btn primary" type="button" data-m="open" style="width:100%">Proposer le mot mystère</button>`;
+    note = `${n} lettres. Une seule proposition : +${BONUS_MYST} si juste, −${room.settings.penMyst} si fausse.`;
+  } else {
+    act = `<button class="btn" type="button" disabled style="width:100%">Proposer le mot mystère</button>`;
+    note = `S'ouvre à ${MYST_THRESHOLD} % de grille remplie. Une seule proposition par joueur.`;
+  }
+  $('#gMAct').innerHTML = act;
+  $('#gMNote').textContent = mNoteMsg || note;
+}
+
+
+function renderFeed() {
+  $('#gFeed').innerHTML = S.feed.map(f => `<li><span class="dot" style="background:${f.color}"></span><span class="t">${f.t}</span><span>${esc(f.msg)}</span></li>`).join('');
+}
+
+function fitGrid() {
+  const b = $('#gBoard');
+  if (!b || !b.clientWidth) return;
+  const cell = Math.floor(Math.min((b.clientWidth - 11) / 10, (b.clientHeight - 14) / 13));
+  document.documentElement.style.setProperty('--cell', Math.max(40, Math.min(cell, 84)) + 'px');
+}
+
+
+function menuAction(act) {
+  closeMenu();
+  if (act === 'leave') leaveRoom();
+}
+
+/* ---------------- Revoir la grille ---------------- */
+function openReview() {
+  S.review = true;
+  S.mode = 'grid';
+  S.sel = { w: G.orderIdx[0], typed: {}, cursor: null };
+  $('#gMenuBtn').hidden = true;
+  $('#gFinal').hidden = true;
+  show('#scrGame');
+  fitGrid();
+  render();
+}
+function closeReview() {
+  S.review = false;
+  $('#gMenuBtn').hidden = false;
+  show('#scrRecap');
+}
+
+/* ---------------- Récapitulatif ---------------- */
+function renderRecap() {
+  const list = S.ranking;
+  const total = G.words.length, foundN = S.found.filter(v => v != null).length;
+  const mFinders = list.filter(p => p.mOk).map(p => esc(p.pseudo));
+  const ranks = list.map(p => `<div class="rank${p.id === me ? ' me' : ''}">
+      <div class="hd"><span class="pos${p.rank === 1 ? ' p1' : ''}">${p.rank}</span><span class="nm"><span class="dot" style="background:${p.color}"></span>${esc(p.pseudo)}</span><span class="tot">${p.score}</span></div>
+      <table>
+        <tr><td>Score de départ</td><td>${p.start}</td></tr>
+        <tr><td>Mots trouvés (${p.words})</td><td>${p.wordPts}</td></tr>
+        <tr><td>Bonus mot vierge</td><td>${p.vierge}</td></tr>
+        <tr><td>Primes jumelles</td><td>${p.twins}</td></tr>
+        <tr><td>Combos et croisements (${p.combos})</td><td>${p.comboPts}</td></tr>
+        <tr><td>Mot mystère</td><td>${p.mystery}</td></tr>
+        <tr><td>Pénalités (${p.penN} erreur${p.penN > 1 ? 's' : ''})</td><td>${p.pen ? '−' + p.pen : '0'}</td></tr>
+      </table></div>`).join('');
+  let fin = '';
+  for (let k = 0; k < R * C; k++) {
+    const x = G.cells[k];
+    if (x.t === 'D') fin += `<i style="background:${clueSlots(x).length ? '#E9E4D4' : '#2B2F52'}"></i>`;
+    else {
+      const pid = S.fill[k];
+      fin += `<i style="background:${pid ? P(pid).tint : '#FFFFFF'};color:${pid ? P(pid).color : '#9CA3AF'}">${x.ch}</i>`;
+    }
+  }
+  const pop = G.words.filter(w => w.theme !== FILLER_THEME);
+  const req = displayPercents(room.settings.weights);
+  const bars = THEMES.map(t => {
+    const n = pop.filter(w => w.theme === t.id).length;
+    const pct = pop.length ? Math.round(n / pop.length * 100) : 0;
+    return `<div class="bar"><span>${esc(t.nom)}</span><span class="tr"><i style="width:${pct}%"></i></span><span class="v">${pct} % / ${req[t.id]} %</span></div>`;
+  }).join('');
+  const again = isHost()
+    ? '<button class="btn primary" type="button" id="rAgain" style="flex:1">Rejouer avec les mêmes joueurs</button>'
+    : `<p class="note" style="flex:1;align-self:center">${esc(P(room.hostId).pseudo)} peut relancer une partie avec les mêmes joueurs.</p>`;
+  $('#recap').innerHTML = `
+    <div class="col">
+      <div><span class="eyebrow">Salon ${esc(room.code)} · mode ${room.settings.mode === 'classique' ? 'classique' : 'dernière chance'}</span><h1>Partie terminée</h1></div>
+      ${S.endReason ? `<p class="reason">${esc(S.endReason)}</p>` : ''}
+      <div class="stats">
+        <div class="stat"><span class="eyebrow">Temps</span><b>${fmtTime(S.durationMs)}</b></div>
+        <div class="stat"><span class="eyebrow">Mots</span><b>${foundN} / ${total}</b></div>
+        <div class="stat"><span class="eyebrow">Mot mystère</span><b>${G.myst ? esc(G.myst.ans) : '—'}</b></div>
+      </div>
+      <p class="note">${mFinders.length ? 'Mot mystère trouvé par ' + mFinders.join(', ') + '.' : 'Personne n’a trouvé le mot mystère.'}</p>
+      ${ranks}
+      <div style="display:flex;gap:10px">
+        ${again}
+        <button class="btn ghost" type="button" id="rLeave">Quitter le salon</button>
+      </div>
+      <p class="notice err" id="rMsg" role="alert"></p>
+    </div>
+    <div class="col">
+      <div class="card"><div class="row"><h2>La grille finale</h2><button class="btn sm primary" type="button" id="rReview">Revoir la grille en détail</button></div><div class="final" aria-hidden="true">${fin}</div><p class="note">Chaque lettre est colorée selon le joueur qui l'a posée ; en gris, les lettres que personne n'a trouvées.</p></div>
+      <div class="card"><h2>Thèmes : réel / demandé</h2><div class="bars">${bars}</div></div>
+    </div>`;
+  if ($('#rAgain')) $('#rAgain').onclick = async () => {
+    const r = await send('room:rematch');
+    if (!r.ok) $('#rMsg').textContent = r.message;
+  };
+  $('#rReview').onclick = openReview;
+  $('#rLeave').onclick = leaveRoom;
+}
+
+/* ---------------- Événements ---------------- */
+function initGameEvents() {
+  $('#gClue').addEventListener('click', e => {
+    const b = e.target.closest('[data-a]');
+    if (!b || !S) return;
+    const a = b.dataset.a;
+    if (S.review) {
+      if (a === 'prev') { selectNext(-1); render(); }
+      else if (a === 'next') { selectNext(1); render(); }
+      else if (a === 'back') closeReview();
+      return;
+    }
+    if (S.over) return;
+    if (a === 'prev') { selectNext(-1); render(); }
+    else if (a === 'next') { selectNext(1); render(); }
+    else if (a === 'clear') clearWord();
+    else if (a === 'ok') submit();
+  });
+  $('#gMAct').addEventListener('click', e => {
+    const b = e.target.closest('[data-m]');
+    if (!b || !S) return;
+    const m = b.dataset.m;
+    if (m === 'open') openMystery();
+    else if (m === 'cancel') closeMystery();
+    else if (m === 'ok') submitMystery();
+  });
+  $('#gMenuBtn').addEventListener('click', () => {
+    const m = $('#gMenu');
+    m.hidden = !m.hidden;
+    $('#gMenuBtn').setAttribute('aria-expanded', String(!m.hidden));
+  });
+  $('#gMenu').addEventListener('click', e => { const b = e.target.closest('[data-act]'); if (b) menuAction(b.dataset.act); });
+  document.addEventListener('click', e => { if (!e.target.closest('.menuwrap')) closeMenu(); });
+  document.addEventListener('keydown', e => {
+    if (!onScreen('#scrGame') || !S) return;
+    if (S.review) {
+      if (e.key === 'Tab' || e.key === 'ArrowRight' || e.key === 'ArrowDown') { selectNext(e.shiftKey ? -1 : 1); render(); e.preventDefault(); }
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { selectNext(-1); render(); e.preventDefault(); }
+      else if (e.key === 'Escape') closeReview();
+      return;
+    }
+    if (S.over) return;
+    if (e.target.tagName === 'INPUT') { if (e.key === 'Escape') e.target.blur(); return; }
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (S.mode === 'mystery') {
+      if (/^[a-zA-Z]$/.test(e.key)) { mysteryType(e.key.toUpperCase()); e.preventDefault(); }
+      else if (e.key === 'Backspace' || e.key === 'Delete') { mysteryBack(); e.preventDefault(); }
+      else if (e.key === 'Enter') { submitMystery(); e.preventDefault(); }
+      else if (e.key === 'Escape') { closeMystery(); e.preventDefault(); }
+      else if (e.key === 'Tab' || e.key === ' ') e.preventDefault();
+      return;
+    }
+    if (/^[a-zA-Z]$/.test(e.key)) { typeLetter(e.key.toUpperCase()); e.preventDefault(); }
+    else if (e.key === 'Backspace' || e.key === 'Delete') { backspace(); e.preventDefault(); }
+    else if (e.key === 'Enter') { submit(); e.preventDefault(); }
+    else if (e.key === 'Tab') { selectNext(e.shiftKey ? -1 : 1); render(); e.preventDefault(); }
+    else if (e.key === ' ') { toggleDirection(); e.preventDefault(); }
+    else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { moveCursor(1); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { moveCursor(-1); e.preventDefault(); }
+    else if (e.key === 'Escape') closeMenu();
+  });
+  if (window.ResizeObserver) new ResizeObserver(fitGrid).observe($('#gBoard'));
+  window.addEventListener('resize', fitGrid);
+  // Chronomètre et compte à rebours : la fin de la dernière chance est décidée par le serveur.
+  setInterval(() => {
+    if (!S || S.over || !onScreen('#scrGame')) return;
+    $('#gTimer').textContent = S.final ? `Fin dans ${Math.max(0, Math.ceil((S.final.endsAt - serverNow()) / 1000))} s` : fmtTime(serverNow() - S.startedAt);
+    if (S.final) renderFinal();
+  }, 250);
+}
+
+
+function onLog() { renderFeed(); }
+
+boot();
+initGameEvents();
+</script>
+</body>
+</html>

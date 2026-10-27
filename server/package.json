@@ -1,0 +1,32 @@
+{
+  "name": "popcrossword-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Serveur de jeu Mots Cultes : API, salons temps réel, PostgreSQL et Redis",
+  "scripts": {
+    "start": "node --env-file=.env src/index.js",
+    "dev": "node --env-file=.env --watch src/index.js",
+    "migrate": "node --env-file=.env scripts/migrate.js",
+    "import-bank": "node --env-file=.env scripts/import-bank.js",
+    "grid-preview": "node --env-file=.env scripts/grid-preview.js",
+    "test": "REDIS_PREFIX=pctest: node --env-file=.env --test --test-concurrency=1 test/*.test.js",
+    "e2e": "npm run e2e:pc && npm run e2e:mobile",
+    "e2e:pc": "REDIS_PREFIX=pce2e: PUBLIC_ORIGIN=http://127.0.0.1:3199 node --env-file=.env e2e/pc.mjs",
+    "e2e:mobile": "REDIS_PREFIX=pce2e: PUBLIC_ORIGIN=http://127.0.0.1:3199 node --env-file=.env e2e/mobile.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@fastify/static": "^10.1.7",
+    "fastify": "^5.12.7",
+    "ioredis": "^6.0.0",
+    "pg": "^8.23.1",
+    "socket.io": "^4.8.4"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1",
+    "socket.io-client": "^4.8.4"
+  }
+}
