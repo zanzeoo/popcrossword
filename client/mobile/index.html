@@ -1,0 +1,784 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14162B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Mots Cultes</title>
+<link rel="manifest" href="/mobile/manifest.webmanifest" crossorigin="use-credentials">
+<link rel="icon" href="/mobile/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/mobile/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#14162B; --panel:#1F2240; --panel2:#2B2F52; --line:#3A3E63;
+  --text:#F4F4F8; --muted:#A9ADCB;
+  --def:#E9E4D4; --def-ink:#4A4537; --filler:#2B2F52; --hard:#DC2626;
+  --sel:#FEF3C7; --sel-ring:#D97706; --act:#FDE68A; --act-ring:#92400E;
+  --gold:#E8B04A; --myst:#B45309;
+  --cell:34px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:'Space Grotesk',system-ui,-apple-system,sans-serif;-webkit-tap-highlight-color:transparent}
+body{overscroll-behavior:none}
+button,input{font-family:inherit;color:inherit}
+button:focus-visible,input:focus-visible{outline:2px solid #8B93FF;outline-offset:2px}
+.app{max-width:480px;margin:0 auto;height:100vh;height:100dvh;position:relative;overflow:hidden;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.screen{display:none;height:100%}
+.screen.on{display:flex;flex-direction:column}
+.eyebrow{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.btn{height:46px;border:0;border-radius:12px;background:var(--panel2);font-size:15px;font-weight:600;cursor:pointer;padding:0 16px;touch-action:manipulation}
+.btn.primary{background:#FACC15;color:#1F2937;font-weight:700}
+.btn.ghost{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
+.btn.sm{height:36px;font-size:13px;padding:0 12px}
+.btn:disabled{opacity:.45}
+.card{background:var(--panel);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.card h2{font-size:12px;margin:0;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;font-weight:600}
+.dot{width:9px;height:9px;border-radius:50%;flex:none;display:inline-block}
+.note{font-size:12px;color:var(--muted);line-height:1.45;margin:0}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+
+/* ---------- Salon ---------- */
+#scrLobby,#scrRecap{overflow-y:auto;display:none}
+#scrLobby.on,#scrRecap.on{display:block}
+.lobby{padding:16px 16px 28px;display:flex;flex-direction:column;gap:14px}
+.lobby h1{font-size:28px;margin:4px 0 0}
+.lobby .sub{color:var(--muted);font-size:14px;margin:4px 0 0;line-height:1.4}
+.cols{display:flex;flex-direction:column;gap:14px}
+.codebox{display:flex;align-items:baseline;justify-content:space-between}
+.codebox .code{font-size:30px;font-weight:700;letter-spacing:.18em}
+.field{display:flex;flex-direction:column;gap:6px}
+.field[hidden]{display:none}
+.field label{font-size:14px;font-weight:500}
+.field input[type=text],.field input[type=number]{height:46px;border-radius:12px;border:0;background:var(--panel2);font-size:16px;padding:0 14px;width:100%}
+.stepper{display:flex;align-items:center;gap:10px}
+.stepper button{width:44px;height:44px;border-radius:12px;border:0;background:var(--panel2);font-size:22px;cursor:pointer}
+.stepper span{min-width:18px;text-align:center;font-size:18px;font-weight:700}
+.bots{display:flex;gap:6px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;background:var(--panel2);border-radius:999px;padding:5px 10px}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;background:var(--panel2);border-radius:12px;padding:4px}
+.seg button{height:40px;border:0;border-radius:9px;background:transparent;font-size:14px;font-weight:600;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed=true]{background:#F4F4F8;color:#14162B}
+.theme{display:grid;grid-template-columns:104px 1fr 44px;align-items:center;gap:10px}
+.theme label{font-size:14px}
+.theme output{text-align:right;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:#FACC15;height:28px}
+.rules{display:grid;grid-template-columns:1fr;gap:12px}
+
+/* ---------- Jeu ---------- */
+.game{padding:6px 10px 8px;gap:5px}
+.top{height:44px;display:flex;align-items:center;justify-content:space-between;flex:none;gap:8px}
+.top .c{font-size:15px;font-weight:700}
+.timer{display:flex;align-items:center;gap:6px;background:var(--panel);border-radius:999px;padding:7px 12px;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.timer.hot{background:#7C2D12;color:#FED7AA}
+.iconbtn{width:44px;height:44px;border-radius:12px;border:0;background:var(--panel);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;flex:none}
+.menuwrap{position:relative}
+.menu{position:absolute;right:0;top:50px;background:#0B0C18;border:1px solid var(--line);border-radius:14px;padding:6px;display:flex;flex-direction:column;z-index:40;min-width:250px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.menu[hidden]{display:none}
+.menu button{height:44px;border:0;background:transparent;text-align:left;padding:0 12px;border-radius:9px;font-size:14px;cursor:pointer}
+.menu button:active{background:var(--panel)}
+.menu .sep{height:1px;background:var(--line);margin:4px 6px}
+.menu .t{font-size:11px;color:var(--muted);padding:6px 12px 2px;letter-spacing:.06em;text-transform:uppercase}
+
+.finalbar{flex:none;display:flex;align-items:center;gap:10px;background:#3B1D0A;box-shadow:inset 0 0 0 1.5px #F97316;border-radius:10px;padding:6px 10px;font-size:12.5px;line-height:1.3;color:#FED7AA}
+.finalbar[hidden]{display:none}
+.finalbar .fl{flex:1;min-width:0}
+.finalbar .big{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;color:#FDBA74}
+
+.scores{display:grid;gap:5px;flex:none}
+.chip{background:var(--panel);border-radius:10px;padding:5px 8px;display:flex;flex-direction:column;gap:1px;min-width:0}
+.chip.me{box-shadow:inset 0 0 0 1.5px #8B93FF}
+.chip.done{opacity:.55}
+.chip .n{display:flex;align-items:center;gap:5px;font-size:11.5px;color:#C9CCE4;min-width:0}
+.chip .n span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scores.many .chip{padding:3px 7px}
+.scores.many .chip .s{font-size:14px}
+.chip .s{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
+.chip.bump .s{animation:bump .5s ease}
+@keyframes bump{40%{transform:scale(1.25);color:#FACC15}}
+
+.mstrip{flex:none;display:flex;align-items:center;gap:7px;height:34px;border-radius:9px;padding:0 4px 0 6px}
+.mstrip.on{box-shadow:inset 0 0 0 2px var(--gold);background:#2A2210}
+.mlabel{font-size:10.5px;font-weight:600;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.mslots{display:flex;gap:2px;min-width:0}
+.mslot{width:18px;height:24px;border-radius:4px;border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#FDE68A;flex:none}
+.mslot.f{background:#3B2F12}
+.mslot.cur{box-shadow:0 0 0 2px #F4F4F8}
+.mslot.g{color:rgba(253,230,138,.35)}
+.mslot.t{background:#5B4515;color:#FFFFFF}
+.mslot.ok{background:#14532D;border-color:#22C55E;color:#BBF7D0}
+.mslot.ko{border-color:#DC2626;color:#FCA5A5}
+#gMAct{margin-left:auto;flex:none}
+.mbtn{height:30px;border:0;border-radius:8px;background:var(--panel);color:var(--muted);font-size:12px;font-weight:600;padding:0 10px;white-space:nowrap;cursor:pointer}
+.mbtn.go{background:var(--gold);color:#1F2937}
+.mbtn:disabled{cursor:default}
+.mres{font-size:12px;font-weight:700;white-space:nowrap;color:var(--muted)}
+.mres.ok{color:#86EFAC}
+.mres.ko{color:#FCA5A5}
+
+.gridwrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative}
+.grid{display:grid;grid-template-columns:repeat(10,var(--cell));grid-auto-rows:var(--cell);gap:1px;padding:1px;background:#4A4F7A;border-radius:4px}
+.grid.shake{animation:shake .35s ease}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.cell{border:0;padding:0;margin:0;position:relative;display:flex;align-items:center;justify-content:center;background:#fff;cursor:pointer;font-weight:700;font-size:calc(var(--cell) * .56);line-height:1;overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+.cell .l{position:relative;z-index:2}
+.cell .wm{position:absolute;left:12%;top:12%;width:76%;height:76%;fill:rgba(15,23,42,.14);z-index:1;pointer-events:none}
+.cell .mc{position:absolute;inset:8%;border-radius:50%;border:1.5px solid var(--myst);z-index:1;pointer-events:none}
+.cell .mn{position:absolute;right:1px;bottom:0;font-size:calc(var(--cell) * .22);color:#92400E;font-weight:700;z-index:2;pointer-events:none}
+.cell.flash{animation:pop .6s ease}
+@keyframes pop{0%{transform:scale(.55);filter:brightness(1.5)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
+.cell.def{background:var(--def);color:var(--def-ink);flex-direction:column;align-items:stretch;justify-content:stretch}
+.cell.def.hard{background:var(--hard);color:#fff}
+.cell.filler{background:var(--filler);cursor:default}
+.dq{flex:1 1 0;min-height:0;display:flex;align-items:center;justify-content:center}
+.dq + .dq{border-top:1px solid rgba(0,0,0,.2)}
+.cell.def.hard .dq + .dq{border-top-color:rgba(255,255,255,.4)}
+.dq .tx{display:none}
+.dq .ar{width:calc(var(--cell) * .58);height:calc(var(--cell) * .58)}
+.cell.def.two .dq .ar{width:calc(var(--cell) * .4);height:calc(var(--cell) * .4)}
+.dq.done{opacity:.32}
+.dq.on{box-shadow:inset 0 0 0 2px var(--act-ring);background:rgba(253,230,138,.55)}
+.cell.def.hard .dq.on{background:rgba(0,0,0,.2);box-shadow:inset 0 0 0 2px #fff}
+
+.ticker{flex:none;height:22px;display:flex;align-items:center;gap:7px;font-size:12.5px;color:#C9CCE4;padding:0 6px;overflow:hidden;white-space:nowrap;transition:opacity .4s}
+.ticker > span:last-child{overflow:hidden;text-overflow:ellipsis}
+.ticker.err{color:#FCA5A5;font-weight:600}
+.ticker.ok{color:#86EFAC;font-weight:600}
+.ticker.fade{opacity:.4}
+.toasts{position:absolute;left:6px;right:6px;top:4px;display:flex;flex-direction:column;gap:5px;pointer-events:none;z-index:5}
+.toast{background:#0B0C18;border:1px solid var(--line);border-radius:12px;padding:8px 11px;font-size:13px;line-height:1.35;display:flex;gap:8px;align-items:flex-start;box-shadow:0 8px 24px rgba(0,0,0,.45);animation:tin .25s ease}
+.toast.err{border-color:#7F1D1D}
+.toast.ok{border-color:#14532D}
+.toast .dot{margin-top:4px}
+@keyframes tin{from{opacity:0;transform:translateY(-6px)}}
+
+.banner{min-height:58px;background:var(--panel);border-radius:12px;display:flex;align-items:center;gap:7px;padding:6px;flex:none}
+.banner .nav{width:34px;height:46px;border-radius:9px;border:0;background:var(--panel2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;padding:0;touch-action:manipulation}
+.banner .nav.wide{width:auto;padding:0 12px;font-size:13px;font-weight:600}
+.banner .ic{width:28px;height:28px;border-radius:8px;background:var(--panel2);display:flex;align-items:center;justify-content:center;flex:none}
+.banner .ic.hard{background:var(--hard)}
+.banner .txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.banner .txt.pad{padding:0 6px}
+.banner .clue{font-size:15px;font-weight:500;line-height:1.2;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.banner .meta{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.banner .len{font-size:11px;color:var(--muted);line-height:1.3}
+.banner .answ{font-size:14px;font-weight:700;letter-spacing:.12em;background:#F4F4F8;color:#14162B;border-radius:5px;padding:2px 7px}
+.banner .who{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#C9CCE4}
+.badge{font-size:10px;font-weight:700;border-radius:4px;padding:2px 6px;white-space:nowrap}
+.badge.hard{background:var(--hard);color:#fff}
+.badge.tw{background:#F4F4F8;color:#14162B}
+.badge.vg{background:#14532D;color:#BBF7D0}
+
+.kb{display:flex;flex-direction:column;gap:5px;flex:none;transition:opacity .2s}
+.kb.dim{opacity:.4}
+.kb .r{display:flex;justify-content:center;gap:4px}
+.key{height:46px;flex:1 1 0;max-width:42px;border:0;border-radius:8px;background:var(--panel2);font-size:18px;font-weight:600;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+.key:active{background:#4A4F7A}
+.key.back{max-width:56px;flex-grow:1.5;background:var(--line)}
+.key.ok{max-width:100px;flex-grow:2.6;background:#FACC15;color:#1F2937;font-size:15px;font-weight:700}
+.reviewbar{display:flex;flex-direction:column;gap:8px;padding:2px 0}
+@media (max-height:720px){ .key{height:40px} .top{height:40px} .banner{min-height:52px} }
+
+.sheetwrap{position:absolute;inset:0;background:rgba(5,6,14,.6);display:flex;align-items:flex-end;z-index:50}
+.sheetwrap[hidden]{display:none}
+.sheet{width:100%;max-height:78%;overflow-y:auto;background:#0B0C18;border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding:14px 16px 22px;display:flex;flex-direction:column;gap:12px}
+.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.feed li{display:grid;grid-template-columns:10px 40px 1fr;gap:8px;align-items:baseline;font-size:13px;line-height:1.35}
+.feed li .t{color:var(--muted);font-variant-numeric:tabular-nums}
+.legend{display:grid;grid-template-columns:1fr;gap:9px;font-size:13px;color:#C9CCE4}
+.legend span{display:flex;align-items:center;gap:10px}
+.legend .sw{width:26px;height:26px;border-radius:4px;flex:none;position:relative;display:flex;align-items:center;justify-content:center;background:#fff}
+.legend .sw .ar{width:18px;height:18px}
+ul.rules{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:1.4;color:#C9CCE4}
+
+/* ---------- Récap ---------- */
+.recap{padding:16px 16px 28px;display:flex;flex-direction:column;gap:14px}
+.recap h1{font-size:28px;margin:4px 0 0}
+.recap .col{display:flex;flex-direction:column;gap:12px}
+.recap .reason{font-size:14px;color:#FDE68A;margin:0}
+.recap .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.recap .stat:nth-child(3){grid-column:1 / -1}
+.recap .stat{background:var(--panel);border-radius:12px;padding:10px 12px;min-width:0}
+.recap .stat b{display:block;font-size:18px;margin-top:2px;overflow-wrap:anywhere}
+.rank{background:var(--panel);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.rank.me{box-shadow:inset 0 0 0 1.5px #8B93FF}
+.rank .hd{display:flex;align-items:center;gap:10px}
+.rank .pos{width:30px;height:30px;border-radius:8px;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-weight:700}
+.rank .pos.p1{background:#FACC15;color:#1F2937}
+.rank .nm{flex:1;font-size:16px;font-weight:600;display:flex;align-items:center;gap:8px}
+.rank .tot{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.rank table{width:100%;border-collapse:collapse;font-size:13px}
+.rank td{padding:3px 0;color:#C9CCE4}
+.rank td:last-child{text-align:right;color:var(--text);font-variant-numeric:tabular-nums}
+.recap .col > div[style*="display:flex"]{flex-wrap:wrap}
+.final{display:grid;grid-template-columns:repeat(10,27px);grid-auto-rows:27px;gap:1px;background:#4A4F7A;padding:1px;border-radius:3px;align-self:center}
+.final i{display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:700;font-size:14px}
+.bars{display:flex;flex-direction:column;gap:7px}
+.bar{display:grid;grid-template-columns:96px 1fr 70px;align-items:center;gap:8px;font-size:12px}
+.bar .tr{height:8px;background:var(--panel2);border-radius:4px;overflow:hidden}
+.bar .tr i{display:block;height:100%;background:#FACC15}
+.bar .v{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.loading{position:absolute;inset:0;background:rgba(20,22,43,.88);display:flex;align-items:center;justify-content:center;font-size:16px;z-index:60}
+.loading[hidden]{display:none}
+/* ---------- Client connecté ---------- */
+[hidden]{display:none!important}
+a{color:#FDE68A}
+#scrHome{overflow-y:auto;display:none}
+#scrHome.on{display:block}
+.netbar{position:fixed;top:0;left:0;right:0;z-index:60;background:#7C2D12;color:#FFEDD5;text-align:center;font-size:13px;font-weight:600;padding:calc(env(safe-area-inset-top) + 6px) 12px 6px}
+.codein{text-transform:uppercase;letter-spacing:.3em;font-weight:700}
+.share{display:flex;gap:8px}
+.share input{flex:1;min-width:0;height:36px;border-radius:10px;border:0;background:var(--panel2);font-size:13px;padding:0 10px;color:var(--muted)}
+.players{display:flex;gap:6px;flex-wrap:wrap}
+.pill small{color:var(--muted);font-size:11px}
+.theme label small{display:block;font-size:11px;color:var(--muted)}
+.pill.off,.chip.off{opacity:.5}
+.field input:disabled,.seg button:disabled,input[type=range]:disabled{opacity:.6}
+.seg button[aria-pressed=true]:disabled{opacity:1}
+</style>
+</head>
+<body>
+<div class="netbar" id="netbar" hidden>Connexion perdue, reconnexion…</div>
+<div class="app" id="app">
+
+<!-- ===================== ACCUEIL ===================== -->
+<section class="screen on" id="scrHome" aria-label="Accueil">
+<div class="lobby">
+  <div>
+    <span class="eyebrow">Mots fléchés pop culture · multijoueur</span>
+    <h1>Mots Cultes</h1>
+    <p class="sub">Remplissez la même grille à plusieurs, en temps réel. Chaque mot rapporte des points au premier qui le trouve.</p>
+  </div>
+  <div class="card">
+    <div class="field">
+      <label for="hPseudo">Ton pseudo</label>
+      <input type="text" id="hPseudo" maxlength="12" autocomplete="nickname" placeholder="12 caractères maximum" enterkeyhint="done">
+    </div>
+  </div>
+  <form class="card" id="hJoinForm" autocomplete="off">
+    <h2>Rejoindre un salon</h2>
+    <div class="field">
+      <label for="hCode">Code du salon</label>
+      <input type="text" id="hCode" maxlength="4" placeholder="ex. K7QF" class="codein" autocapitalize="characters" enterkeyhint="go">
+    </div>
+    <button class="btn primary" type="submit" id="hJoin">Rejoindre</button>
+  </form>
+  <div class="card">
+    <h2>Nouveau salon</h2>
+    <p class="note">Tu règles la partie et tu partages le code avec les autres joueurs (2 à 8).</p>
+    <button class="btn" type="button" id="hCreate">Créer un salon</button>
+  </div>
+  <p class="notice err" id="hMsg" role="alert"></p>
+  <p class="note">Sur ordinateur : <a href="/pc/">version PC</a>. Proposer des définitions se fait pour l'instant dans le <a href="/proto/pc/">prototype PC hors ligne</a>.</p>
+</div>
+</section>
+
+<!-- ===================== SALON ===================== -->
+<section class="screen" id="scrLobby" aria-label="Salon">
+<div class="lobby">
+  <div class="row" style="align-items:flex-end">
+    <div>
+      <span class="eyebrow">Salon privé</span>
+      <h1>Salon <span id="lCodeTitle">----</span></h1>
+    </div>
+    <button class="btn sm ghost" type="button" id="lLeave">Quitter</button>
+  </div>
+  <p class="sub" id="lSub" style="margin:0"></p>
+  <div class="card">
+    <div class="codebox"><h2>Code du salon</h2><span class="code" id="lCode">----</span></div>
+    <div class="share">
+      <input type="text" id="lLink" readonly aria-label="Lien d'invitation">
+      <button class="btn sm" type="button" id="lCopy">Copier le lien</button>
+    </div>
+    <div class="field">
+      <label>Joueurs <span class="note" id="lCount"></span></label>
+      <div class="players" id="lPlayers"></div>
+    </div>
+  </div>
+  <p class="notice err" id="lMsg" role="alert"></p>
+  <button class="btn primary" id="lStart" type="button" style="height:52px;font-size:17px">Lancer la partie</button>
+  <div class="card">
+    <h2>Dosage des thèmes</h2>
+    <div id="lThemes" style="display:flex;flex-direction:column;gap:10px"></div>
+    <p class="note">Les pourcentages portent sur les mots pop culture. Les petits mots de remplissage ne comptent pas.</p>
+  </div>
+  <div class="card">
+    <h2>Mode de jeu</h2>
+    <div class="seg" role="group" aria-label="Mode de jeu" id="lMode" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+      <button type="button" data-v="classique">Classique</button>
+      <button type="button" data-v="derniere_chance">Dernière chance</button>
+    </div>
+    <p class="note" id="lModeNote"></p>
+    <div class="field" id="lLastWrap">
+      <label for="lLastTime">Temps pour la dernière tentative (secondes)</label>
+      <input type="number" id="lLastTime" min="5" max="120" step="5" inputmode="numeric">
+    </div>
+  </div>
+  <div class="card">
+    <h2>Règles de score</h2>
+    <div class="rules">
+      <div class="field"><label for="lStartScore">Score de départ</label><input type="number" id="lStartScore" min="0" max="1000" step="10" inputmode="numeric"></div>
+      <div class="field"><label for="lPenWord">Pénalité mot faux</label><input type="number" id="lPenWord" min="0" max="500" step="5" inputmode="numeric"></div>
+      <div class="field"><label for="lPenMyst">Pénalité mot mystère faux</label><input type="number" id="lPenMyst" min="0" max="500" step="5" inputmode="numeric"></div>
+    </div>
+    <p class="note">Tous les joueurs partent avec le même score, qui ne descend jamais sous zéro. Gains : 10 pts par lettre, ×2 si la définition est difficile, +20 mot vierge, +20 par jumelle, +100 mot mystère.</p>
+  </div>
+</div>
+</section>
+
+<!-- ===================== JEU ===================== -->
+<section class="screen game" id="scrGame" aria-label="Partie">
+  <header class="top">
+    <div><span class="eyebrow">Salon privé</span><div class="c" id="gCode">Code ----</div></div>
+    <div class="timer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M9 2h6"/></svg><span id="gTimer">00:00</span></div>
+    <div class="menuwrap">
+      <button class="iconbtn" id="gMenuBtn" aria-label="Menu" aria-expanded="false" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg></button>
+      <div class="menu" id="gMenu" hidden>
+        <button type="button" data-act="feed">Fil de la partie</button>
+        <button type="button" data-act="legend">Légende et règles</button>
+        <div class="sep"></div>
+        <button type="button" data-act="leave">Quitter la partie</button>
+      </div>
+    </div>
+  </header>
+  <div class="finalbar" id="gFinal" role="status" hidden></div>
+  <div class="scores" id="gScores"></div>
+  <div class="mstrip" id="gMCard">
+    <span class="mlabel">Mystère</span>
+    <div class="mslots" id="gMSlots"></div>
+    <div id="gMAct"></div>
+  </div>
+  <div class="ticker fade" id="gTicker" role="status" aria-live="polite"></div>
+  <div class="gridwrap" id="gWrap">
+    <div class="grid" id="gGrid" role="grid" aria-label="Grille de mots fléchés"></div>
+  </div>
+  <div class="banner" id="gBanner"></div>
+  <div class="kb" id="gKb"></div>
+</section>
+
+<!-- ===================== RÉCAP ===================== -->
+<section class="screen" id="scrRecap" aria-label="Récapitulatif"><div class="recap" id="recap"></div></section>
+
+<div class="sheetwrap" id="gSheetWrap" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="gSheetTitle">
+    <div class="row"><h2 id="gSheetTitle" style="margin:0;font-size:16px">Fil</h2><button class="btn sm ghost" id="gSheetClose" type="button">Fermer</button></div>
+    <div id="gSheetBody"></div>
+  </div>
+</div>
+
+<div class="loading" id="loading" hidden>Génération de la grille…</div>
+</div>
+
+<script src="/socket.io/socket.io.min.js"></script>
+<script src="/shared/core.js"></script>
+<script>
+'use strict';
+/* =====================================================================
+   Client mobile (PWA) : affichage. La logique commune est dans /shared/core.js.
+   L'interface reprend celle du prototype (prototypes/mobile/index.html) :
+   clavier intégré, bandeau de définition, ligne d'info au-dessus de la grille.
+   ===================================================================== */
+function mNote(msg) { notice(msg, 'err'); }
+
+function render() {
+  if (!S || !G) return;
+  renderGrid();
+  renderFinal();
+  renderScores();
+  renderClue();
+  renderMystery();
+  renderKeyboard();
+}
+
+function renderFinal() {
+  const el = $('#gFinal');
+  if (!S.final || S.over) { el.hidden = true; $('.timer').classList.remove('hot'); return; }
+  el.hidden = false;
+  $('.timer').classList.add('hot');
+  const left = Math.max(0, Math.ceil((S.final.endsAt - serverNow()) / 1000));
+  const by = esc(P(S.final.by).pseudo);
+  const waiting = [...S.final.pending].map(id => esc(P(id).pseudo)).join(', ');
+  let msg;
+  if (S.final.by === me) msg = 'Tu as trouvé le mot mystère ! Dernier essai pour les autres.';
+  else if (S.final.pending.has(me)) msg = `<b>${by}</b> a trouvé le mot mystère : <b>un seul essai</b> pour toi !`;
+  else msg = `Ton essai est joué.${waiting ? ' En attente : ' + waiting + '.' : ''}`;
+  el.innerHTML = `<span class="fl">${msg}</span><span class="big">${left} s</span>`;
+}
+
+function renderScores() {
+  if (!S || !room) return;
+  const list = room.players.slice().sort((a, b) => (S.scores[b.id] ?? 0) - (S.scores[a.id] ?? 0));
+  const el = $('#gScores');
+  el.classList.toggle('many', list.length > 4);
+  el.style.gridTemplateColumns = `repeat(${Math.min(list.length, 4)}, minmax(0, 1fr))`; // 2 rangées au-delà de 4 joueurs
+  const now = Date.now();
+  el.innerHTML = list.map((p, i) => {
+    const done = S.final && !S.final.pending.has(p.id) && S.final.by !== p.id;
+    return `<div class="chip${p.id === me ? ' me' : ''}${S.bump[p.id] && now - S.bump[p.id] < 400 ? ' bump' : ''}${done ? ' done' : ''}${p.online ? '' : ' off'}">
+      <div class="n"><span class="dot" style="background:${p.color}"></span><span>${i + 1}. ${esc(p.pseudo)}</span></div>
+      <span class="s">${S.scores[p.id] ?? 0}</span></div>`;
+  }).join('');
+}
+
+function notice(msg, kind) {
+  toast(msg, kind, kind === 'ok' ? '#22C55E' : kind === 'err' ? '#EF4444' : '#A9ADCB');
+}
+
+function renderClue() {
+  const el = $('#gBanner');
+  const nav = (dir, label, path) => `<button class="nav" type="button" data-nav="${dir}" aria-label="${label}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${path}"/></svg></button>`;
+  const prev = nav(-1, 'Mot précédent', 'M15 6l-6 6 6 6'), next = nav(1, 'Mot suivant', 'M9 6l6 6-6 6');
+  const plain = (title, sub) => `<div class="txt pad"><span class="clue">${title}</span>${sub ? `<div class="meta"><span class="len">${sub}</span></div>` : ''}</div>`;
+
+  if (S.review) {
+    if (S.sel.w == null) { el.innerHTML = plain('Touche un mot pour voir sa réponse'); return; }
+    const w = G.words[S.sel.w], pid = S.found[S.sel.w];
+    const who = pid
+      ? `<span class="who"><span class="dot" style="background:${P(pid).color}"></span>${S.how[S.sel.w] === 'trouvé' ? '' : S.how[S.sel.w] + ', '}${esc(P(pid).pseudo)}</span>`
+      : `<span class="who"><span class="dot" style="background:#94A3B8"></span>personne</span>`;
+    el.innerHTML = `${prev}<div class="txt"><span class="clue">${esc(w.clue)}</span><div class="meta"><span class="answ">${w.ans}</span>${who}</div></div>${next}`;
+    return;
+  }
+  if (S.over) { el.innerHTML = plain('Partie terminée !'); return; }
+  if (S.mode === 'mystery') {
+    el.innerHTML = `<div class="txt pad"><span class="clue">Mot mystère · ${G.myst.len} lettres</span><div class="meta"><span class="len">Tape-le en entier puis « Proposer ». +${BONUS_MYST} si juste, −${room.settings.penMyst} si faux.</span></div></div><button class="nav wide" type="button" data-b="cancel">Annuler</button>`;
+    return;
+  }
+  if (locked(me)) { el.innerHTML = plain('Ta dernière tentative est jouée', 'La partie se termine quand tout le monde a joué.'); return; }
+  if (S.sel.w == null) { el.innerHTML = plain('Touche une case pour choisir un mot'); return; }
+
+  const w = G.words[S.sel.w];
+  const anyFilled = w.cells.some(k => S.fill[k] != null);
+  const twinsIn = [...new Set(w.cells.filter(k => G.twinOf[k] && S.fill[k] == null).map(k => G.twinOf[k].pair))];
+  const badges = [];
+  if (w.hard) badges.push('<span class="badge hard">Difficile ×2</span>');
+  twinsIn.forEach(p => badges.push(`<span class="badge tw">${TWIN_SYM[p]} +${PRIME_TWIN}</span>`));
+  if (!anyFilled) badges.push(`<span class="badge vg">Vierge +${BONUS_VIERGE}</span>`);
+  const arrow = w.dir === 'h'
+    ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15"/><path d="M14 7l5 5-5 5"/></svg>'
+    : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v15"/><path d="M7 14l5 5 5-5"/></svg>';
+  el.innerHTML = `${prev}
+    <span class="ic${w.hard ? ' hard' : ''}">${arrow}</span>
+    <div class="txt">
+      <span class="clue">${esc(w.clue)}</span>
+      <div class="meta"><span class="len">${w.len} lettres · ${wordBase(w)} pts</span>${badges.join('')}</div>
+    </div>${next}`;
+}
+
+function renderMystery() {
+  const card = $('#gMCard');
+  card.hidden = !G.myst;
+  if (!G.myst) return;
+  const st = S.you;
+  const typing = S.mode === 'mystery';
+  card.classList.toggle('on', typing);
+  $('#gMSlots').innerHTML = G.myst.cells.map((k, i) => {
+    const known = S.fill[k] != null ? (S.L[k] || '') : '';
+    if (S.review) return `<span class="mslot ok">${G.myst.ans[i]}</span>`;
+    if (typing) {
+      const t = S.mTyped[i];
+      return `<span class="mslot${t ? ' t' : (known ? ' g' : '')}${i === S.mTyped.length ? ' cur' : ''}">${t || known}</span>`;
+    }
+    if (st.mOk) return `<span class="mslot ok">${(st.mGuess || '')[i] || ''}</span>`;
+    if (st.mAttempt) return `<span class="mslot ko">${(st.mGuess || '')[i] || ''}</span>`;
+    return `<span class="mslot${known ? ' f' : ''}">${known}</span>`;
+  }).join('');
+  const pct = fillPct();
+  let act;
+  if (S.review) {
+    const finders = (S.ranking || []).filter(p => p.mOk).map(p => esc(p.pseudo));
+    act = `<span class="mres">${finders.length ? finders.join(', ') : 'Personne'}</span>`;
+  } else if (st.mAttempt) {
+    act = st.mOk ? `<span class="mres ok">✓ +${BONUS_MYST}</span>` : `<span class="mres ko">✗ −${st.mLost || 0}</span>`;
+  } else if (typing) {
+    act = `<button class="mbtn" type="button" data-m="cancel">Annuler</button>`;
+  } else if (locked(me)) {
+    act = `<button class="mbtn" type="button" disabled>Joué</button>`;
+  } else if (pct >= MYST_THRESHOLD && !S.over) {
+    act = `<button class="mbtn go" type="button" data-m="open">Proposer</button>`;
+  } else {
+    act = `<button class="mbtn" type="button" disabled>${pct} % / ${MYST_THRESHOLD} %</button>`;
+  }
+  $('#gMAct').innerHTML = act;
+}
+
+// Fil de la partie : les actions des autres passent dans la ligne d'info, les tiennes par notice().
+function onLog(entry, pid) {
+  if (pid !== me) toast(entry.msg, '', entry.color);
+  renderFeed();
+}
+function renderFeed() { if (sheetView === 'feed') renderSheet(); }
+
+function fitGrid() {
+  const b = $('#gWrap');
+  if (!b || !b.clientWidth) return;
+  const cell = Math.floor(Math.min((b.clientWidth - 11) / 10, (b.clientHeight - 14) / 13));
+  document.documentElement.style.setProperty('--cell', Math.max(22, Math.min(cell, 46)) + 'px');
+}
+
+/* ---------------- Menu ---------------- */
+function menuAction(act) {
+  closeMenu();
+  if (act === 'feed' || act === 'legend') openSheet(act);
+  else if (act === 'leave') leaveRoom();
+}
+
+/* ---------------- Revoir la grille ---------------- */
+function openReview() {
+  S.review = true;
+  const tk = $('#gTicker');
+  clearTimeout(tick.t); tick.q = []; tk.innerHTML = ''; tk.className = 'ticker fade';
+  $('#gTimer').textContent = fmtTime(S.durationMs);
+  S.mode = 'grid';
+  S.sel = { w: G.orderIdx[0], typed: {}, cursor: null };
+  $('#gMenuBtn').hidden = true;
+  $('#gFinal').hidden = true;
+  show('#scrGame');
+  fitGrid();
+  render();
+}
+function closeReview() {
+  S.review = false;
+  $('#gMenuBtn').hidden = false;
+  show('#scrRecap');
+}
+
+/* ---------------- Récapitulatif ---------------- */
+function renderRecap() {
+  const list = S.ranking;
+  const total = G.words.length, foundN = S.found.filter(v => v != null).length;
+  const mFinders = list.filter(p => p.mOk).map(p => esc(p.pseudo));
+  const ranks = list.map(p => `<div class="rank${p.id === me ? ' me' : ''}">
+      <div class="hd"><span class="pos${p.rank === 1 ? ' p1' : ''}">${p.rank}</span><span class="nm"><span class="dot" style="background:${p.color}"></span>${esc(p.pseudo)}</span><span class="tot">${p.score}</span></div>
+      <table>
+        <tr><td>Score de départ</td><td>${p.start}</td></tr>
+        <tr><td>Mots trouvés (${p.words})</td><td>${p.wordPts}</td></tr>
+        <tr><td>Bonus mot vierge</td><td>${p.vierge}</td></tr>
+        <tr><td>Primes jumelles</td><td>${p.twins}</td></tr>
+        <tr><td>Combos et croisements (${p.combos})</td><td>${p.comboPts}</td></tr>
+        <tr><td>Mot mystère</td><td>${p.mystery}</td></tr>
+        <tr><td>Pénalités (${p.penN} erreur${p.penN > 1 ? 's' : ''})</td><td>${p.pen ? '−' + p.pen : '0'}</td></tr>
+      </table></div>`).join('');
+  let fin = '';
+  for (let k = 0; k < R * C; k++) {
+    const x = G.cells[k];
+    if (x.t === 'D') fin += `<i style="background:${clueSlots(x).length ? '#E9E4D4' : '#2B2F52'}"></i>`;
+    else {
+      const pid = S.fill[k];
+      fin += `<i style="background:${pid ? P(pid).tint : '#FFFFFF'};color:${pid ? P(pid).color : '#9CA3AF'}">${x.ch}</i>`;
+    }
+  }
+  const pop = G.words.filter(w => w.theme !== FILLER_THEME);
+  const req = displayPercents(room.settings.weights);
+  const bars = THEMES.map(t => {
+    const n = pop.filter(w => w.theme === t.id).length;
+    const pct = pop.length ? Math.round(n / pop.length * 100) : 0;
+    return `<div class="bar"><span>${esc(t.nom)}</span><span class="tr"><i style="width:${pct}%"></i></span><span class="v">${pct} % / ${req[t.id]} %</span></div>`;
+  }).join('');
+  const again = isHost()
+    ? '<button class="btn primary" type="button" id="rAgain" style="flex:1">Rejouer</button>'
+    : `<p class="note" style="flex:1;align-self:center">${esc(P(room.hostId).pseudo)} peut relancer une partie.</p>`;
+  $('#recap').innerHTML = `
+    <div class="col">
+      <div><span class="eyebrow">Salon ${esc(room.code)} · mode ${room.settings.mode === 'classique' ? 'classique' : 'dernière chance'}</span><h1>Partie terminée</h1></div>
+      ${S.endReason ? `<p class="reason">${esc(S.endReason)}</p>` : ''}
+      <div class="stats">
+        <div class="stat"><span class="eyebrow">Temps</span><b>${fmtTime(S.durationMs)}</b></div>
+        <div class="stat"><span class="eyebrow">Mots</span><b>${foundN} / ${total}</b></div>
+        <div class="stat"><span class="eyebrow">Mystère</span><b>${G.myst ? esc(G.myst.ans) : '—'}</b></div>
+      </div>
+      <p class="note">${mFinders.length ? 'Mot mystère trouvé par ' + mFinders.join(', ') + '.' : 'Personne n’a trouvé le mot mystère.'}</p>
+      <button class="btn primary" type="button" id="rReview2">Revoir la grille en détail</button>
+      ${ranks}
+      <div style="display:flex;gap:10px">
+        ${again}
+        <button class="btn ghost" type="button" id="rLeave">Quitter</button>
+      </div>
+      <p class="notice err" id="rMsg" role="alert"></p>
+    </div>
+    <div class="col">
+      <div class="card"><div class="row"><h2>La grille finale</h2><button class="btn sm primary" type="button" id="rReview">Revoir</button></div><div class="final" aria-hidden="true">${fin}</div><p class="note">Chaque lettre est colorée selon le joueur qui l'a posée ; en gris, les lettres que personne n'a trouvées.</p></div>
+      <div class="card"><h2>Thèmes : réel / demandé</h2><div class="bars">${bars}</div></div>
+    </div>`;
+  if ($('#rAgain')) $('#rAgain').onclick = async () => {
+    const r = await send('room:rematch');
+    if (!r.ok) $('#rMsg').textContent = r.message;
+  };
+  $('#rReview').onclick = openReview;
+  $('#rReview2').onclick = openReview;
+  $('#rLeave').onclick = leaveRoom;
+}
+
+/* ---------------- Événements ---------------- */
+function initGameEvents() {
+  $('#gKb').addEventListener('click', e => {
+    if (!S) return;
+    const r = e.target.closest('[data-r]');
+    if (r) { if (r.dataset.r === 'back') closeReview(); return; }
+    const b = e.target.closest('[data-k]');
+    if (!b || S.review || S.over) return;
+    const k = b.dataset.k;
+    if (S.mode === 'mystery') {
+      if (k === 'BACK') mysteryBack(); else if (k === 'OK') submitMystery(); else mysteryType(k);
+      renderKeyboard();
+      return;
+    }
+    if (k === 'BACK') backspace(); else if (k === 'OK') submit(); else typeLetter(k);
+  });
+  $('#gBanner').addEventListener('click', e => {
+    if (!S) return;
+    const b = e.target.closest('[data-nav],[data-b]');
+    if (!b) return;
+    if (b.dataset.b === 'cancel') { closeMystery(); return; }
+    if (S.mode !== 'grid' || (S.over && !S.review)) return;
+    selectNext(+b.dataset.nav);
+    render();
+  });
+  $('#gMAct').addEventListener('click', e => {
+    const b = e.target.closest('[data-m]');
+    if (!b || !S) return;
+    if (b.dataset.m === 'open') openMystery();
+    else if (b.dataset.m === 'cancel') closeMystery();
+  });
+  $('#gMenuBtn').addEventListener('click', e => {
+    e.stopPropagation();
+    const m = $('#gMenu');
+    m.hidden = !m.hidden;
+    $('#gMenuBtn').setAttribute('aria-expanded', String(!m.hidden));
+  });
+  $('#gMenu').addEventListener('click', e => { const b = e.target.closest('[data-act]'); if (b) menuAction(b.dataset.act); });
+  $('#gSheetClose').addEventListener('click', closeSheet);
+  $('#gSheetWrap').addEventListener('click', e => { if (e.target.id === 'gSheetWrap') closeSheet(); });
+  document.addEventListener('click', e => { if (!e.target.closest('.menuwrap')) closeMenu(); });
+  // Clavier physique (tablette avec clavier, ordinateur en petite fenêtre).
+  document.addEventListener('keydown', e => {
+    if (!onScreen('#scrGame') || !S) return;
+    if (sheetView) { if (e.key === 'Escape') closeSheet(); return; }
+    if (S.review) {
+      if (e.key === 'Tab' || e.key === 'ArrowRight' || e.key === 'ArrowDown') { selectNext(e.shiftKey ? -1 : 1); render(); e.preventDefault(); }
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { selectNext(-1); render(); e.preventDefault(); }
+      else if (e.key === 'Escape') closeReview();
+      return;
+    }
+    if (S.over) return;
+    if (e.target.tagName === 'INPUT') return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (S.mode === 'mystery') {
+      if (/^[a-zA-Z]$/.test(e.key)) { mysteryType(e.key.toUpperCase()); e.preventDefault(); }
+      else if (e.key === 'Backspace' || e.key === 'Delete') { mysteryBack(); e.preventDefault(); }
+      else if (e.key === 'Enter') { submitMystery(); e.preventDefault(); }
+      else if (e.key === 'Escape') { closeMystery(); e.preventDefault(); }
+      return;
+    }
+    if (/^[a-zA-Z]$/.test(e.key)) { typeLetter(e.key.toUpperCase()); e.preventDefault(); }
+    else if (e.key === 'Backspace' || e.key === 'Delete') { backspace(); e.preventDefault(); }
+    else if (e.key === 'Enter') { submit(); e.preventDefault(); }
+    else if (e.key === 'Tab') { selectNext(e.shiftKey ? -1 : 1); render(); e.preventDefault(); }
+    else if (e.key === ' ') { toggleDirection(); e.preventDefault(); }
+    else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { moveCursor(1); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { moveCursor(-1); e.preventDefault(); }
+    else if (e.key === 'Escape') closeMenu();
+  });
+  if (window.ResizeObserver) new ResizeObserver(fitGrid).observe($('#gWrap'));
+  window.addEventListener('resize', fitGrid);
+  // Chronomètre et compte à rebours : la fin de la dernière chance est décidée par le serveur.
+  setInterval(() => {
+    if (!S || S.over || S.review || !onScreen('#scrGame')) return;
+    $('#gTimer').textContent = S.final ? `${Math.max(0, Math.ceil((S.final.endsAt - serverNow()) / 1000))} s` : fmtTime(serverNow() - S.startedAt);
+    if (S.final) renderFinal();
+  }, 250);
+}
+
+/* ===== Spécifique mobile ===== */
+// Ligne d'info au-dessus de la grille : elle ne masque jamais les cases.
+// Tes propres retours (raté, bien joué) restent affichés au moins 1,8 s avant d'être remplacés.
+const tick = { busyUntil: 0, q: [], t: null };
+function toast(msg, kind, color) {
+  if (!kind && Date.now() < tick.busyUntil) { tick.q.push([msg, kind, color]); tick.q = tick.q.slice(-2); return; }
+  showTick(msg, kind, color);
+}
+function showTick(msg, kind, color) {
+  const el = $('#gTicker');
+  if (!el) return;
+  el.className = 'ticker' + (kind ? ' ' + kind : '');
+  el.innerHTML = `<span class="dot" style="background:${color || '#A9ADCB'}"></span><span>${esc(msg)}</span>`;
+  tick.busyUntil = kind ? Date.now() + 1800 : 0;
+  clearTimeout(tick.t);
+  tick.t = setTimeout(() => {
+    if (tick.q.length) showTick(...tick.q.shift());
+    else el.classList.add('fade');
+  }, kind ? 1800 : 3000);
+}
+
+const KB_KEYS = (() => {
+  const rows = ['AZERTYUIOP', 'QSDFGHJKLM', 'WXCVBN'];
+  let h = '';
+  rows.forEach((r, i) => {
+    h += '<div class="r">';
+    if (i === 2) h += '<button class="key back" type="button" data-k="BACK" aria-label="Effacer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5h11v14H9l-6-7z"/><path d="M12 9l5 6"/><path d="M17 9l-5 6"/></svg></button>';
+    for (const ch of r) h += `<button class="key" type="button" data-k="${ch}">${ch}</button>`;
+    if (i === 2) h += '<button class="key ok" type="button" data-k="OK" id="gOk">Valider</button>';
+    h += '</div>';
+  });
+  return h;
+})();
+const KB_REVIEW = `<div class="reviewbar">
+  <p class="note">Toutes les réponses sont affichées. Touche un mot pour voir qui l'a trouvé.</p>
+  <button class="btn primary" type="button" data-r="back">Retour au récapitulatif</button>
+</div>`;
+function renderKeyboard() {
+  const kb = $('#gKb');
+  const view = S.review ? 'review' : 'keys';
+  if (kb.dataset.view !== view) { kb.innerHTML = view === 'review' ? KB_REVIEW : KB_KEYS; kb.dataset.view = view; }
+  if (view === 'keys') {
+    const dim = S.over || (locked(me) && S.mode !== 'mystery');
+    kb.classList.toggle('dim', dim);
+    $('#gOk').textContent = S.mode === 'mystery' ? 'Proposer' : (locked(me) ? 'Joué' : 'Valider');
+  } else kb.classList.remove('dim');
+}
+
+let sheetView = null;
+function openSheet(view) { sheetView = view; $('#gSheetWrap').hidden = false; renderSheet(); }
+function closeSheet() { sheetView = null; $('#gSheetWrap').hidden = true; }
+function renderSheet() {
+  const body = $('#gSheetBody');
+  const s = room.settings;
+  if (sheetView === 'feed') {
+    $('#gSheetTitle').textContent = 'Fil de la partie';
+    body.innerHTML = S && S.feed.length
+      ? `<ul class="feed">${S.feed.map(f => `<li><span class="dot" style="background:${f.color}"></span><span class="t">${f.t}</span><span>${esc(f.msg)}</span></li>`).join('')}</ul>`
+      : '<p class="note">Rien pour l’instant.</p>';
+  } else if (sheetView === 'legend') {
+    $('#gSheetTitle').textContent = 'Légende et règles';
+    const sw = inner => `<span class="sw">${inner}</span>`;
+    const wm = path => `<svg viewBox="0 0 24 24" width="18" height="18" style="fill:rgba(15,23,42,.35)" aria-hidden="true">${path}</svg>`;
+    body.innerHTML = `
+      <div class="legend">
+        <span>${sw(wm(SVG_STAR))}Case jumelle ★</span>
+        <span>${sw(wm(SVG_DIAMOND))}Case jumelle ◆</span>
+        <span>${sw('<span style="position:absolute;inset:2px;border-radius:50%;border:2px solid var(--myst)"></span>')}Lettre du mot mystère</span>
+        <span><span class="sw" style="background:var(--hard)"></span>Définition difficile ×2</span>
+        <span><span class="sw" style="background:var(--def);color:var(--def-ink)">${AR_RD}</span>Flèche coudée : le mot part à côté</span>
+        <span><span class="sw" style="background:var(--filler)"></span>Case vide</span>
+      </div>
+      <ul class="rules">
+        <li>Tape chaque mot <b>en entier</b>, lettres déjà posées comprises.</li>
+        <li>Départ : <b>${s.startScore} pts</b>. Mot faux : <b>−${s.penWord}</b>. Mot mystère faux : <b>−${s.penMyst}</b>.</li>
+        <li>Gains : ${PTS_LETTER} pts par lettre, ×${HARD_MULT} si difficile, +${BONUS_VIERGE} mot vierge, +${PRIME_TWIN} par jumelle révélée, +${BONUS_MYST} mot mystère.</li>
+        <li>Mot mystère : proposable à ${MYST_THRESHOLD} % de grille remplie, une seule proposition.</li>
+        <li>Mode ${s.mode === 'classique' ? '<b>classique</b> : fin quand la grille est complète.' : `<b>dernière chance</b> : dès que le mot mystère est trouvé, chacun a un seul essai (${s.lastTime} s).`}</li>
+      </ul>`;
+  }
+}
+
+boot();
+initGameEvents();
+
+// PWA : installable sur l'écran d'accueil. Le service worker garde l'interface en cache ;
+// la partie elle-même passe toujours par le réseau.
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/mobile/sw.js', { scope: '/mobile/' }).catch(() => {});
+</script>
+</body>
+</html>

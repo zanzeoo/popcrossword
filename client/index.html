@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mots Cultes</title>
+<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;gap:16px;background:#14162B;color:#F4F4F8;font-family:system-ui,sans-serif}a{color:#FDE68A}</style>
+<script>
+// Aiguillage : écran tactile de taille téléphone → client mobile, sinon client PC.
+// Le code d'invitation (?code=XXXX) suit.
+(function () {
+  var mobile = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 768;
+  location.replace((mobile ? '/mobile/' : '/pc/') + location.search);
+})();
+</script>
+</head>
+<body>
+<a href="/pc/">Version ordinateur</a>
+<a href="/mobile/">Version téléphone</a>
+</body>
+</html>

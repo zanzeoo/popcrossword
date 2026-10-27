@@ -1,6 +1,6 @@
 # Architecture technique
 
-Ce document décrit le système cible, qui n'est pas encore développé. Les prototypes du dossier `prototypes/` simulent le serveur dans le navigateur : la logique de jeu y est la même que celle visée côté serveur.
+Ce document décrit le système en place sur le VPS. La racine du site aiguille vers le client PC (`client/pc/`) ou mobile (`client/mobile/`, une PWA) ; les deux partagent leur logique dans `client/shared/core.js` et ne diffèrent que par l'affichage. Les prototypes hors ligne restent servis sous `/proto/`. `GET /api/themes` donne les thèmes actifs et leur nombre de mots, pour les curseurs du salon.
 
 ## Principes
 
@@ -13,40 +13,57 @@ Ce document décrit le système cible, qui n'est pas encore développé. Les pro
 
 | Couche | Choix | Rôle |
 | --- | --- | --- |
-| Client | HTML/CSS/JS léger, puis PWA | Interface PC et mobile, clavier intégré sur mobile |
+| Client | HTML/CSS/JS sans build ; PWA sur mobile | Interface PC et mobile, clavier intégré sur mobile. Le service worker ne met en cache que l'interface, jamais l'API ni le temps réel |
 | Temps réel | Node.js + Socket.IO (ou Colyseus) | Salons, diffusion de l'état, chronomètre de la dernière chance |
 | API | Node.js (Fastify ou Express) | Définitions, modération, administration, thèmes |
-| État des salons | Redis | Parties en cours, limite de fréquence, reconnexion |
+| État des salons | Mémoire du process + Redis | État en mémoire, sauvegardé dans Redis ; limite de fréquence ; jetons de reconnexion |
 | Données | PostgreSQL | Définitions, thèmes, joueurs, parties, journal |
 | Hébergement | VPS Debian, reverse proxy en HTTPS | Le HTTPS est obligatoire pour la PWA et les WebSockets sécurisés (`wss://`) |
 
 ## Temps réel : messages d'une partie
 
+Implémenté dans `server/src/rooms/` : `rooms.js` (salons et messages), `rules.js` (règles du prototype : score, jumelles, combos, mot mystère, dernière chance), `store.js` (Redis), `persist.js` (enregistrement en base). Tests : `npm test`.
+
+Chaque message client reçoit un accusé : `{ ok: true, ... }` ou `{ ok: false, error, message }`, où `error` est un code stable (`pseudo_pris`, `trop_rapide`, `deja_trouve`…) et `message` un texte prêt à afficher.
+
 ### Client → serveur
 
 | Message | Contenu | Contrôles côté serveur |
 | --- | --- | --- |
-| `room:create` | pseudo, réglages (thèmes, mode, score de départ, pénalités, délai de dernière chance) | — |
-| `room:join` | code, pseudo | salon existant, 8 joueurs au maximum, pseudo unique dans le salon |
-| `game:start` | — | réservé au créateur du salon |
-| `word:submit` | id du mot, lettres tapées | une tentative par seconde ; mot encore libre ; joueur pas encore verrouillé par la dernière chance |
-| `mystery:submit` | lettres tapées | grille remplie à 80 % ou plus ; une seule proposition par joueur |
+| `room:create` | pseudo, réglages (facultatifs) | pseudo de 1 à 12 caractères ; réglages valides. Renvoie le code et un **jeton de session** |
+| `room:join` | code, pseudo | salon existant et en attente, 8 joueurs au maximum, pseudo unique dans le salon. Renvoie un jeton |
+| `room:resume` | jeton | reconnexion : renvoie l'état complet (`room:state`, puis `game:grid` ou `game:over`) |
+| `room:settings` | réglages partiels | créateur seulement, salon en attente |
+| `room:leave` | — | en attente, libère la place (le créateur passe la main) ; en partie, le joueur reste au classement |
+| `game:start` | — | créateur seulement, 2 joueurs au minimum |
+| `word:submit` | `word` (index), `letters` | une tentative par seconde (Redis) ; mot encore libre ; joueur pas verrouillé par la dernière chance |
+| `mystery:submit` | `letters` | grille remplie à 80 % ou plus ; une seule proposition par joueur ; bonne longueur |
+
+Réglages : `mode` (`classique` ou `derniere_chance`), `startScore` (0-1000), `penWord` et `penMyst` (0-500), `lastTime` (5-120 s), `weights` (thème actif → poids de 0 à 100).
 
 ### Serveur → clients
 
-| Message | Contenu |
-| --- | --- |
-| `room:state` | joueurs, réglages, statut du salon |
-| `game:grid` | structure de la grille, **sans les solutions** |
-| `word:found` | id du mot, joueur, lettres révélées, jumelles et combos déclenchés, points |
-| `word:wrong` | envoyé au seul joueur concerné : la pénalité |
-| `mystery:result` | juste ou faux, points |
-| `final:start` | mode Dernière chance : joueur qui a trouvé, heure de fin, joueurs attendus |
-| `game:over` | raison, classement, détail des scores, grille complète **avec** les solutions |
+| Message | Destinataires | Contenu |
+| --- | --- | --- |
+| `room:state` | salon | code, statut (`lobby`, `starting`, `playing`, `over`), créateur, réglages, joueurs (couleur, connecté ou non) |
+| `game:grid` | chaque joueur | structure de la grille **sans les solutions**, lettres déjà révélées, mots trouvés, scores, dernière chance, état du joueur |
+| `word:found` | salon | mot, joueur, points, bonus vierge, jumelles, combos, lettres révélées, scores |
+| `word:wrong` | le joueur seul | pénalité et nouveau score |
+| `room:scores` | salon | scores après une pénalité |
+| `mystery:result` | salon | joueur, juste ou faux, points (la proposition elle-même n'est pas diffusée) |
+| `final:start` | salon | joueur qui a trouvé, heure de fin, joueurs attendus |
+| `final:update` | salon | joueur qui vient de jouer son essai, joueurs encore attendus |
+| `game:over` | salon | raison, durée, classement avec le détail des scores, grille complète **avec** les solutions |
 
-**Conflits** : si deux joueurs valident le même mot presque en même temps, le premier message traité gagne. Le second reçoit « déjà trouvé », sans pénalité.
+**Conflits** : si deux joueurs valident le même mot presque en même temps, le premier message traité gagne. Le second reçoit `deja_trouve`, sans pénalité.
 
-**Reconnexion** : un téléphone coupe la connexion dès que l'onglet passe en arrière-plan. À la reconnexion, le serveur renvoie l'état complet : grille, lettres trouvées, scores et chronomètre.
+**Reconnexion** : le client garde le jeton de session (valable 6 h) et l'envoie avec `room:resume` à chaque reconnexion.
+
+**Redémarrage du service** : chaque salon est sauvegardé dans Redis à chaque changement et rechargé au démarrage ; le compte à rebours de la dernière chance est réarmé.
+
+**Ménage** : un salon sans joueur connecté depuis 30 min est supprimé, ainsi qu'un récapitulatif de plus de 2 h.
+
+**Origine** : le serveur refuse les connexions WebSocket venant d'une autre origine que `PUBLIC_ORIGIN` (par défaut `https://popcrossword.zanzeoo.fr`).
 
 ## API REST : définitions et administration
 
@@ -91,7 +108,9 @@ L'écran de modération du prototype PC exporte les propositions en JSON, et l'a
   3. des mots adjacents autorisés quand chaque suite de lettres formée est un mot de la banque ;
   4. des flèches coudées sur les bords ;
   5. 30 essais, en gardant la grille la plus dense.
-- Durée : de 0,3 à 0,8 s sur un PC.
+- Durée : de 0,3 à 0,8 s sur un PC, de 0,7 à 1,2 s sur le VPS (2 cœurs).
+- Implémentation : `server/src/game/generator.js` (port à l'identique du prototype). Le calcul tourne dans un thread permanent (`grid.js`, `worker.js`) pour ne pas bloquer les salons ; les demandes simultanées sont traitées l'une après l'autre. `publicGrid()` produit la version envoyée aux joueurs, sans les solutions.
+- Vérification : `npm run grid-preview -- 20` génère 20 grilles avec la banque en base, contrôle leur cohérence et affiche la dernière.
 - Pour aller plus loin : des grilles pré-générées en tâche de fond, et une banque de mots courants bien plus large.
 
 ## Sécurité et limites

@@ -1,5 +1,5 @@
 -- Schéma PostgreSQL proposé pour Mots Cultes (PopCrossword).
--- Point de départ, pas encore utilisé par du code : voir docs/architecture.md.
+-- Schéma initial. Les évolutions passent par db/migrations/ (voir server/scripts/migrate.js).
 
 CREATE TYPE role_joueur       AS ENUM ('joueur', 'moderateur', 'admin');
 CREATE TYPE difficulte        AS ENUM ('facile', 'moyen', 'difficile', 'expert');

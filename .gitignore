@@ -1,0 +1,4 @@
+node_modules/
+.env
+*.log
+server/e2e/shots/

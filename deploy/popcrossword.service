@@ -1,0 +1,19 @@
+[Unit]
+Description=PopCrossword (Mots Cultes) - serveur de jeu
+After=network.target postgresql.service redis-server.service
+Requires=postgresql.service redis-server.service
+
+[Service]
+Type=simple
+User=zanzeoo
+WorkingDirectory=/home/zanzeoo/popcrossword/server
+ExecStart=/usr/bin/node --env-file=.env src/index.js
+Restart=on-failure
+RestartSec=3
+Environment=NODE_ENV=production
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadOnlyPaths=/home/zanzeoo/popcrossword
+
+[Install]
+WantedBy=multi-user.target
