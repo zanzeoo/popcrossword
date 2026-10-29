@@ -80,11 +80,11 @@ Testé sur Debian 13 avec Caddy déjà installé. Le dépôt est attendu dans `/
    sudo systemctl start popcrossword
    curl https://<domaine>/api/health   # {"ok":true,"postgres":"ok","redis":"ok"}
    ```
-5. **Mot de passe d'accès** (facultatif, pendant le développement) :
+5. **Mot de passe sur les prototypes** (facultatif) :
    ```bash
    sudo bash deploy/protect.sh
    ```
-   Le script demande un identifiant et un mot de passe, et n'écrit que leur hash bcrypt dans le Caddyfile. `/api/health` reste public pour la supervision. Le relancer change le mot de passe.
+   Le script demande un identifiant et un mot de passe, et n'écrit que leur hash bcrypt dans le Caddyfile. Seul `/proto/*` est protégé : le jeu et `/api/health` sont publics, et l'API d'édition se protège par `ADMIN_TOKEN` (en-tête `Authorization: Bearer`, qui ne peut pas cohabiter avec le basic auth). Le relancer change le mot de passe ; `--garder` conserve l'identifiant et le hash actuels.
 
 **Mettre à jour** : récupérer le code, puis `npm install --omit=dev`, `npm run migrate` et `sudo systemctl restart popcrossword`. Les fichiers des clients sont servis directement : une modification de `client/` est en ligne sans redémarrage.
 
