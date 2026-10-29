@@ -262,6 +262,15 @@ function modal(build) {
 function editDefinition(d) {
   const creating = !d;
   const reponse = h('input', { value: d?.reponse_saisie ?? d?.reponse ?? '', maxlength: 24, required: true });
+  const repCount = h('span', { class: 'count' });
+  // Même normalisation que le serveur : sans accents, lettres seulement.
+  const refreshRep = () => {
+    const n = reponse.value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z]/g, '').length;
+    repCount.textContent = `${n} lettre${n > 1 ? 's' : ''} (2 à 10)`;
+    repCount.classList.toggle('over', n < 2 || n > 10);
+  };
+  reponse.addEventListener('input', refreshRep);
+  refreshRep();
   const texte = h('input', { value: d?.texte ?? '', maxlength: 60, required: true });
   const count = h('span', { class: 'count' });
   const refreshCount = () => {
@@ -289,7 +298,7 @@ function editDefinition(d) {
         await show();
       } catch (ex) { err.textContent = ex.message; }
     } },
-    h('label', {}, 'Réponse (2 à 10 lettres, accents et tirets acceptés)'), reponse,
+    h('label', {}, 'Réponse ', repCount), reponse,
     h('label', {}, 'Définition ', count), texte,
     h('div', { class: 'row' }, h('div', {}, h('label', {}, 'Thème'), theme), h('div', {}, h('label', {}, 'Difficulté'), diff)),
     h('label', {}, 'Explication (facultative pour la banque intégrée)'), expl,

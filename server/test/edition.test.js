@@ -51,6 +51,10 @@ test('thèmes : création, doublon, désactivation, suppression', async () => {
 test('définitions : créer, normaliser, doublon, modifier, supprimer, restaurer, journal', async () => {
   let res = await call('POST', '/api/admin/definitions', { reponse: 'Éléphant-Rose', texte: 'Pas si discret', theme_id: THEME });
   assert.equal(res.statusCode, 400, 'plus de 10 lettres');
+  for (const reponse of ['A', 'é-', 'Spider-Man-2', '1234', 'ABCDEFGHIJK']) {
+    res = await call('POST', '/api/admin/definitions', { reponse, texte: 'Hors format', theme_id: THEME });
+    assert.equal(res.statusCode, 400, `« ${reponse} » refusé`);
+  }
 
   res = await call('POST', '/api/admin/definitions', { reponse: 'Spider-Man', texte: 'Héros à toile', theme_id: THEME, difficulte: 'moyen' });
   assert.equal(res.statusCode, 201);

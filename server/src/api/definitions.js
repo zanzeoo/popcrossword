@@ -8,6 +8,14 @@ const STATUTS = ['en_attente', 'validee', 'refusee'];
 // « Spider-Man » → SPIDERMAN : sans accents, majuscules, lettres seulement.
 const normalizeAnswer = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z]/g, '');
 
+// Longueur imposée aux mots de la grille : 2 à 10 lettres, sans chiffres (« Spider-Man 2 » ne devient pas SPIDERMAN).
+function validAnswer(input) {
+  const reponse = normalizeAnswer(input);
+  if (/\d/.test(input)) throw httpError(400, 'la réponse ne doit pas contenir de chiffres');
+  if (!/^[A-Z]{2,10}$/.test(reponse)) throw httpError(400, `la réponse doit faire de 2 à 10 lettres (« ${input.trim()} » en fait ${reponse.length})`);
+  return reponse;
+}
+
 const COLUMNS = `d.id, d.reponse, d.reponse_saisie, d.texte, d.theme_id, d.difficulte, d.explication, d.source,
   d.statut, d.auteur_id, d.moderateur_id, d.commentaire, d.cree_le, d.modere_le, d.modifie_le, d.supprimee_le`;
 
@@ -127,8 +135,7 @@ export async function editionRoutes(app) {
       properties: { ...fields, statut: { type: 'string', enum: STATUTS, default: 'validee' } } } },
   }, async (req, reply) => {
     const b = req.body;
-    const reponse = normalizeAnswer(b.reponse);
-    if (!/^[A-Z]{2,10}$/.test(reponse)) throw httpError(400, 'la réponse doit faire de 2 à 10 lettres (hors accents et tirets)');
+    const reponse = validAnswer(b.reponse);
     const row = await inTransaction(async (c) => {
       await assertTheme(c, b.theme_id);
       const { rows } = await c.query(
@@ -152,8 +159,7 @@ export async function editionRoutes(app) {
     const args = [];
     const set = (col, value) => { args.push(value); sets.push(`${col} = $${args.length}`); };
     if (b.reponse !== undefined) {
-      const reponse = normalizeAnswer(b.reponse);
-      if (!/^[A-Z]{2,10}$/.test(reponse)) throw httpError(400, 'la réponse doit faire de 2 à 10 lettres (hors accents et tirets)');
+      const reponse = validAnswer(b.reponse);
       set('reponse', reponse);
       set('reponse_saisie', b.reponse.trim());
     }
