@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { pool } from './db.js';
 import { redis } from './redis.js';
 import { createRooms } from './rooms/rooms.js';
+import { editionRoutes } from './api/definitions.js';
 
 // Chaque vérification abandonne au bout de 2 s pour que la sonde réponde même si un service est tombé.
 const check = (promise) => Promise.race([
@@ -38,6 +39,9 @@ export async function buildApp({ logger = true, rooms: roomOptions } = {}) {
       ORDER BY t.cree_le, t.id`);
     return rows;
   });
+
+  // API d'édition (définitions, modération, thèmes) : protégée par ADMIN_TOKEN, voir api/auth.js.
+  await app.register(editionRoutes);
 
   app.get('/api/health', async (req, reply) => {
     const checks = {
