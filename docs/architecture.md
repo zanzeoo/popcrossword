@@ -67,7 +67,7 @@ Réglages : `mode` (`classique` ou `derniere_chance`), `startScore` (0-1000), `p
 
 ## API REST : définitions et administration
 
-**État actuel** : la modération, l'administration et l'export (tout sauf `POST /api/definitions` et `GET /api/definitions/mine`, qui attendent les comptes joueurs) sont codés dans `server/src/api/`. Faute de rôles, ils sont protégés par un jeton unique : `ADMIN_TOKEN` dans `server/.env`, envoyé en `Authorization: Bearer <jeton>`. Il vaut rôle admin (le journal est signé par le joueur « admin »). Sans `ADMIN_TOKEN`, ces routes répondent 503. Ajouts : `GET /api/admin/definitions/:id`, `GET /api/admin/definitions/:id/journal`. Un thème n'est supprimable que s'il est vide, sinon on le désactive.
+**État actuel** : la modération, l'administration et l'export (tout sauf `POST /api/definitions` et `GET /api/definitions/mine`, qui attendent les comptes joueurs) sont codés dans `server/src/api/`. Faute de rôles, ils sont protégés par un jeton unique : `ADMIN_TOKEN` dans `server/.env`, envoyé en `Authorization: Bearer <jeton>`. Il vaut rôle admin (le journal est signé par le joueur « admin »). Sans `ADMIN_TOKEN`, ces routes répondent 503. **Interface web** : `/admin/` (`client/admin/index.html`, sans build) demande le jeton une fois (gardé dans l'onglet seulement), puis propose les définitions (recherche, filtres, création, modification, suppression, historique, export CSV), la file de modération et les thèmes. Les textes sont affichés sans jamais être interprétés comme du HTML. Test : `npm run e2e:admin`. Ajouts : `GET /api/admin/definitions/:id`, `GET /api/admin/definitions/:id/journal`. Un thème n'est supprimable que s'il est vide, sinon on le désactive.
 
 | Méthode et route | Rôle minimum | Effet |
 | --- | --- | --- |

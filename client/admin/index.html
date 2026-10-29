@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Mots Cultes · Administration</title>
+<style>
+:root{
+  --bg:#14162B; --panel:#1F2240; --panel2:#2B2F52; --line:#3A3E63;
+  --text:#F4F4F8; --muted:#A9ADCB; --gold:#E8B04A; --ok:#4ADE80; --bad:#F87171;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 'Space Grotesk',system-ui,-apple-system,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 12px}
+button:hover{border-color:var(--gold)}
+button.primary{background:var(--gold);border-color:var(--gold);color:#1a1405;font-weight:600}
+button.danger{border-color:var(--bad);color:var(--bad)}
+button.small{padding:3px 8px;font-size:13px}
+button:disabled{opacity:.5;cursor:default}
+input,select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 10px;width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--gold);outline-offset:-1px}
+label{display:block;color:var(--muted);font-size:13px;margin:10px 0 4px}
+header{display:flex;align-items:center;gap:16px;padding:10px 20px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+header h1{font-size:17px;margin:0 8px 0 0}
+nav{display:flex;gap:4px;flex:1}
+nav button{border:0;background:none;border-radius:8px;color:var(--muted)}
+nav button.on{background:var(--panel2);color:var(--text)}
+.badge{background:var(--gold);color:#1a1405;border-radius:10px;padding:0 7px;font-size:12px;font-weight:700;margin-left:6px}
+main{padding:20px;max-width:1200px;margin:0 auto}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:14px}
+.bar>div{flex:1 1 130px;min-width:110px}
+.bar label{margin-top:0}
+.bar .btns{flex:0 0 auto;display:flex;gap:8px}
+div.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;background:var(--panel);border-radius:10px;overflow:hidden}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em;background:var(--panel2)}
+tr.deleted td{opacity:.5;text-decoration:line-through}
+td.rep{font-weight:700;letter-spacing:.06em;white-space:nowrap}
+td.act{white-space:nowrap;text-align:right}
+.tag{display:inline-block;border-radius:6px;padding:1px 7px;font-size:12px;background:var(--panel2);border:1px solid var(--line)}
+.tag.validee{color:var(--ok);border-color:var(--ok)}
+.tag.refusee{color:var(--bad);border-color:var(--bad)}
+.tag.en_attente{color:var(--gold);border-color:var(--gold)}
+.pager{display:flex;gap:10px;align-items:center;justify-content:center;margin:14px 0;color:var(--muted)}
+.muted{color:var(--muted)}
+.empty{padding:30px;text-align:center;color:var(--muted)}
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:20px;width:min(520px,94vw)}
+dialog::backdrop{background:#000a}
+dialog h2{margin:0 0 6px;font-size:18px}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.err{color:var(--bad);margin-top:10px;min-height:1em}
+.count{float:right;font-size:12px}.count.over{color:var(--bad)}
+.cards{display:grid;gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.card .rep{font-size:20px;font-weight:700;letter-spacing:.08em}
+.card .def{margin:4px 0 8px;font-size:17px}
+.card .ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.card .ctl input{flex:1 1 200px;width:auto}.card .ctl select{width:auto}
+.login{max-width:380px;margin:12vh auto;background:var(--panel);padding:24px;border-radius:12px;border:1px solid var(--line)}
+.login h1{margin:0 0 4px;font-size:20px}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--gold);border-radius:8px;padding:8px 16px;opacity:0;pointer-events:none;transition:opacity .2s}
+#toast.show{opacity:1}
+.hist li{margin-bottom:10px}
+.hist pre{margin:4px 0 0;white-space:pre-wrap;font:12px/1.4 ui-monospace,monospace;color:var(--muted)}
+@media (max-width:700px){.hide-s{display:none}main{padding:12px}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast" role="status"></div>
+<script>
+'use strict';
+// Construit le DOM sans innerHTML : les textes (dont les propositions des joueurs) ne sont jamais interprétés comme du HTML.
+const h = (tag, props = {}, ...kids) => {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(props ?? {})) {
+    if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (k === 'class') el.className = v;
+    else if (v === true) el.setAttribute(k, '');
+    else if (v !== false && v != null) el.setAttribute(k, v);
+  }
+  for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid);
+  return el;
+};
+
+const DIFFS = ['facile', 'moyen', 'difficile', 'expert'];
+const STATUTS = { en_attente: 'En attente', validee: 'Validée', refusee: 'Refusée' };
+const app = document.getElementById('app');
+let token = '';
+try { token = sessionStorage.getItem('pc_admin_token') ?? ''; } catch { /* stockage indisponible */ }
+let themes = [];
+let tab = 'definitions';
+const filters = { q: '', theme: '', statut: '', source: '', difficulte: '', supprimees: 'non', page: 1 };
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+class ApiError extends Error {}
+let loggingIn = false;
+async function api(method, path, body) {
+  const res = await fetch(path, {
+    method,
+    headers: { authorization: `Bearer ${token}`, ...(body !== undefined ? { 'content-type': 'application/json' } : {}) },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+  if (res.status === 401) {
+    if (!loggingIn) logout();
+    throw new ApiError(loggingIn ? 'Jeton invalide.' : 'Session expirée : reconnectez-vous.');
+  }
+  if (res.status === 503) throw new ApiError('API d’édition désactivée côté serveur (ADMIN_TOKEN absent).');
+  const ct = res.headers.get('content-type') ?? '';
+  const data = ct.includes('json') ? await res.json() : await res.blob();
+  if (!res.ok) throw new ApiError(data.erreur ?? `Erreur ${res.status}`);
+  return data;
+}
+
+function logout() {
+  token = '';
+  try { sessionStorage.removeItem('pc_admin_token'); } catch { /* ignoré */ }
+  renderLogin();
+}
+
+// ---------- Connexion ----------
+function renderLogin(message = '') {
+  const input = h('input', { type: 'password', placeholder: 'Jeton d’administration', autocomplete: 'off', autofocus: true });
+  const err = h('div', { class: 'err' }, message);
+  const form = h('form', { class: 'login', onsubmit: async (e) => {
+    e.preventDefault();
+    token = input.value.trim();
+    loggingIn = true;
+    try {
+      themes = await api('GET', '/api/admin/themes');
+      try { sessionStorage.setItem('pc_admin_token', token); } catch { /* ignoré */ }
+      start();
+    } catch (ex) { token = ''; err.textContent = ex.message; } finally { loggingIn = false; }
+  } },
+  h('h1', {}, 'Mots Cultes · Administration'),
+  h('p', { class: 'muted' }, 'Le jeton est le ADMIN_TOKEN de server/.env. Il reste dans cet onglet et s’efface à sa fermeture.'),
+  input, err, h('div', { class: 'actions' }, h('button', { class: 'primary' }, 'Entrer')));
+  app.replaceChildren(form);
+  input.focus();
+}
+
+// ---------- Squelette ----------
+const content = h('main');
+const nav = h('nav');
+let pendingCount = 0;
+
+function renderShell() {
+  const tabs = [['definitions', 'Définitions'], ['moderation', 'Modération'], ['themes', 'Thèmes']];
+  nav.replaceChildren(...tabs.map(([id, label]) => h('button', { class: tab === id ? 'on' : '', onclick: () => { tab = id; renderShell(); show(); } },
+    label, id === 'moderation' && pendingCount ? h('span', { class: 'badge' }, pendingCount) : null)));
+}
+
+async function start() {
+  app.replaceChildren(h('header', {}, h('h1', {}, 'Mots Cultes · Administration'), nav,
+    h('button', { class: 'small', onclick: logout }, 'Déconnexion')), content);
+  renderShell();
+  await show();
+}
+
+async function show() {
+  content.replaceChildren(h('p', { class: 'empty' }, 'Chargement…'));
+  try {
+    themes = await api('GET', '/api/admin/themes');
+    pendingCount = (await api('GET', '/api/moderation?limite=1')).total;
+    renderShell();
+    await ({ definitions: viewDefinitions, moderation: viewModeration, themes: viewThemes })[tab]();
+  } catch (ex) { content.replaceChildren(h('p', { class: 'empty err' }, ex.message)); }
+}
+
+const themeName = (id) => themes.find((t) => t.id === id)?.nom ?? id;
+const themeSelect = (value, { all } = {}) => h('select', {},
+  all ? h('option', { value: '' }, 'Tous') : null,
+  themes.map((t) => h('option', { value: t.id, selected: t.id === value }, t.nom + (t.actif ? '' : ' (inactif)'))));
+const qs = (o) => new URLSearchParams(Object.entries(o).filter(([, v]) => v !== '' && v != null)).toString();
+
+// ---------- Définitions ----------
+async function viewDefinitions() {
+  const f = filters;
+  const sel = (key, options) => h('select', { onchange: (e) => { f[key] = e.target.value; f.page = 1; viewDefinitions(); } },
+    options.map(([v, label]) => h('option', { value: v, selected: f[key] === v }, label)));
+  const themeSel = themeSelect(f.theme, { all: true });
+  themeSel.value = f.theme;
+  themeSel.onchange = (e) => { f.theme = e.target.value; f.page = 1; viewDefinitions(); };
+  const search = h('input', { type: 'search', placeholder: 'Réponse ou définition', value: f.q });
+  const doSearch = () => { f.q = search.value.trim(); f.page = 1; viewDefinitions(); };
+  search.addEventListener('keydown', (e) => e.key === 'Enter' && doSearch());
+
+  const bar = h('div', { class: 'bar' },
+    h('div', { style: 'flex-basis:220px' }, h('label', {}, 'Recherche'), search),
+    h('div', {}, h('label', {}, 'Thème'), themeSel),
+    h('div', {}, h('label', {}, 'Statut'), sel('statut', [['', 'Tous'], ...Object.entries(STATUTS)])),
+    h('div', {}, h('label', {}, 'Source'), sel('source', [['', 'Toutes'], ['integree', 'Intégrée'], ['communaute', 'Communauté']])),
+    h('div', {}, h('label', {}, 'Difficulté'), sel('difficulte', [['', 'Toutes'], ...DIFFS.map((d) => [d, d])])),
+    h('div', {}, h('label', {}, 'Supprimées'), sel('supprimees', [['non', 'Masquées'], ['oui', 'Seulement'], ['toutes', 'Incluses']])),
+    h('div', { class: 'btns' },
+      h('button', { onclick: doSearch }, 'Chercher'),
+      h('button', { class: 'primary', onclick: () => editDefinition(null) }, '+ Nouveau'),
+      h('button', { onclick: exportCsv }, 'Export CSV')));
+
+  const { page, ...query } = f;
+  const data = await api('GET', `/api/admin/definitions?${qs({ ...query, page, limite: 50 })}`);
+  const pages = Math.max(1, Math.ceil(data.total / data.limite));
+  const table = data.items.length ? h('div', { class: 'scroll' }, h('table', {},
+    h('thead', {}, h('tr', {}, ['#', 'Réponse', 'Définition', 'Thème', 'Diff.', 'Statut', ''].map((c, i) => h('th', { class: [0, 4].includes(i) ? 'hide-s' : '' }, c)))),
+    h('tbody', {}, data.items.map((d) => h('tr', { class: d.supprimee_le ? 'deleted' : '' },
+      h('td', { class: 'muted hide-s' }, d.id),
+      h('td', { class: 'rep' }, d.reponse),
+      h('td', {}, d.texte, d.source === 'communaute' ? h('span', { class: 'tag', style: 'margin-left:6px' }, 'communauté') : null),
+      h('td', {}, themeName(d.theme_id)),
+      h('td', { class: 'hide-s' }, d.difficulte ?? '—'),
+      h('td', {}, h('span', { class: `tag ${d.statut}` }, STATUTS[d.statut])),
+      h('td', { class: 'act' },
+        h('button', { class: 'small', onclick: () => editDefinition(d) }, 'Modifier'), ' ',
+        h('button', { class: 'small', onclick: () => history(d) }, 'Historique'), ' ',
+        d.supprimee_le
+          ? h('button', { class: 'small', onclick: () => act('POST', `/api/admin/definitions/${d.id}/restaurer`, 'Restaurée') }, 'Restaurer')
+          : h('button', { class: 'small danger', onclick: () => confirm(`Supprimer « ${d.reponse} » ?`) && act('DELETE', `/api/admin/definitions/${d.id}`, 'Supprimée') }, 'Supprimer')))))
+  )) : h('p', { class: 'empty' }, 'Aucune définition.');
+
+  content.replaceChildren(bar, table,
+    h('div', { class: 'pager' },
+      h('button', { disabled: f.page <= 1, onclick: () => { f.page--; viewDefinitions(); } }, '←'),
+      `${data.total} définition(s) · page ${f.page} / ${pages}`,
+      h('button', { disabled: f.page >= pages, onclick: () => { f.page++; viewDefinitions(); } }, '→')));
+}
+
+async function act(method, path, okMessage, body) {
+  try { await api(method, path, body); toast(okMessage); await show(); } catch (ex) { toast(ex.message); }
+}
+
+async function exportCsv() {
+  try {
+    const { page, ...query } = filters;
+    const blob = await api('GET', `/api/admin/export.csv?${qs(query)}`);
+    const a = h('a', { href: URL.createObjectURL(blob), download: 'definitions.csv' });
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } catch (ex) { toast(ex.message); }
+}
+
+// Fenêtre modale générique ; fn reçoit la fenêtre pour la fermer.
+function modal(build) {
+  const dlg = h('dialog');
+  dlg.addEventListener('close', () => dlg.remove());
+  dlg.append(...build(dlg));
+  document.body.append(dlg);
+  dlg.showModal();
+  return dlg;
+}
+
+function editDefinition(d) {
+  const creating = !d;
+  const reponse = h('input', { value: d?.reponse_saisie ?? d?.reponse ?? '', maxlength: 24, required: true });
+  const texte = h('input', { value: d?.texte ?? '', maxlength: 60, required: true });
+  const count = h('span', { class: 'count' });
+  const refreshCount = () => {
+    count.textContent = `${texte.value.length}/40`;
+    count.classList.toggle('over', texte.value.length > 40);
+  };
+  texte.addEventListener('input', refreshCount);
+  const theme = themeSelect(d?.theme_id ?? 'films');
+  const diff = h('select', {}, h('option', { value: '' }, 'Non classée'), DIFFS.map((x) => h('option', { value: x, selected: d?.difficulte === x }, x)));
+  const expl = h('textarea', { rows: 2, maxlength: 280 }, d?.explication ?? '');
+  const statut = h('select', {}, Object.entries(STATUTS).map(([v, l]) => h('option', { value: v, selected: (d?.statut ?? 'validee') === v }, l)));
+  const err = h('div', { class: 'err' });
+  refreshCount();
+  return modal((dlg) => [
+    h('h2', {}, creating ? 'Nouvelle définition' : `Modifier #${d.id}`),
+    h('form', { onsubmit: async (e) => {
+      e.preventDefault();
+      const body = { reponse: reponse.value.trim(), texte: texte.value.trim(), theme_id: theme.value,
+        difficulte: diff.value || null, explication: expl.value.trim() || null, statut: statut.value };
+      if (creating && body.explication === null) delete body.explication;
+      try {
+        await (creating ? api('POST', '/api/admin/definitions', body) : api('PATCH', `/api/admin/definitions/${d.id}`, body));
+        dlg.close();
+        toast(creating ? 'Définition créée' : 'Modifiée');
+        await show();
+      } catch (ex) { err.textContent = ex.message; }
+    } },
+    h('label', {}, 'Réponse (2 à 10 lettres, accents et tirets acceptés)'), reponse,
+    h('label', {}, 'Définition ', count), texte,
+    h('div', { class: 'row' }, h('div', {}, h('label', {}, 'Thème'), theme), h('div', {}, h('label', {}, 'Difficulté'), diff)),
+    h('label', {}, 'Explication (facultative pour la banque intégrée)'), expl,
+    h('label', {}, 'Statut'), statut,
+    err,
+    h('div', { class: 'actions' }, h('button', { type: 'button', onclick: () => dlg.close() }, 'Annuler'), h('button', { class: 'primary' }, 'Enregistrer'))),
+  ]);
+}
+
+async function history(d) {
+  let rows;
+  try { rows = await api('GET', `/api/admin/definitions/${d.id}/journal`); } catch (ex) { return toast(ex.message); }
+  const changed = (r) => {
+    if (!r.avant || !r.apres) return '';
+    return Object.keys(r.apres).filter((k) => JSON.stringify(r.avant[k]) !== JSON.stringify(r.apres[k]) && !['modifie_le', 'modere_le'].includes(k))
+      .map((k) => `${k} : ${r.avant[k] ?? '∅'} → ${r.apres[k] ?? '∅'}`).join('\n');
+  };
+  modal((dlg) => [
+    h('h2', {}, `Historique de ${d.reponse} (#${d.id})`),
+    rows.length ? h('ul', { class: 'hist' }, rows.map((r) => h('li', {}, h('b', {}, r.action), ' ', h('span', { class: 'muted' }, new Date(r.le).toLocaleString('fr-FR')), h('pre', {}, changed(r)))))
+      : h('p', { class: 'muted' }, 'Aucune action enregistrée.'),
+    h('div', { class: 'actions' }, h('button', { onclick: () => dlg.close() }, 'Fermer')),
+  ]);
+}
+
+// ---------- Modération ----------
+async function viewModeration() {
+  const data = await api('GET', '/api/moderation?limite=100');
+  if (!data.items.length) return content.replaceChildren(h('p', { class: 'empty' }, 'Aucune proposition en attente.'));
+  content.replaceChildren(h('p', { class: 'muted' }, `${data.total} proposition(s) en attente, de la plus ancienne à la plus récente.`),
+    h('div', { class: 'cards' }, data.items.map((d) => {
+      const diff = h('select', {}, h('option', { value: '' }, 'Difficulté : inchangée'), DIFFS.map((x) => h('option', { value: x, selected: d.difficulte === x }, x)));
+      const motif = h('input', { placeholder: 'Motif du refus (obligatoire pour refuser)', maxlength: 140 });
+      return h('div', { class: 'card' },
+        h('div', { class: 'rep' }, d.reponse, d.reponse_saisie && d.reponse_saisie !== d.reponse ? h('span', { class: 'muted', style: 'font-size:14px;font-weight:400;margin-left:8px' }, `(saisi : ${d.reponse_saisie})`) : null),
+        h('div', { class: 'def' }, d.texte),
+        h('div', { class: 'muted' }, `${themeName(d.theme_id)} · ${new Date(d.cree_le).toLocaleDateString('fr-FR')}`),
+        d.explication ? h('div', { style: 'margin-top:6px' }, h('i', {}, d.explication)) : null,
+        h('div', { class: 'ctl' }, diff,
+          h('button', { class: 'primary', onclick: () => act('POST', `/api/moderation/${d.id}/valider`, 'Validée', diff.value ? { difficulte: diff.value } : undefined) }, 'Valider'),
+          h('button', { onclick: () => editDefinition(d) }, 'Modifier')),
+        h('div', { class: 'ctl' }, motif,
+          h('button', { class: 'danger', onclick: () => motif.value.trim() ? act('POST', `/api/moderation/${d.id}/refuser`, 'Refusée', { commentaire: motif.value.trim() }) : (toast('Indiquez un motif'), motif.focus()) }, 'Refuser')));
+    })));
+}
+
+// ---------- Thèmes ----------
+async function viewThemes() {
+  const nom = h('input', { placeholder: 'Nouveau thème (24 caractères max)', maxlength: 24 });
+  const add = async () => {
+    if (!nom.value.trim()) return;
+    try { await api('POST', '/api/admin/themes', { nom: nom.value.trim() }); toast('Thème créé'); await show(); } catch (ex) { toast(ex.message); }
+  };
+  nom.addEventListener('keydown', (e) => e.key === 'Enter' && add());
+  content.replaceChildren(
+    h('div', { class: 'bar' }, h('div', { style: 'flex-basis:300px' }, nom), h('div', { class: 'btns' }, h('button', { class: 'primary', onclick: add }, 'Ajouter'))),
+    h('table', {},
+      h('thead', {}, h('tr', {}, ['Thème', 'Mots', 'Validés', 'Actif', ''].map((c) => h('th', {}, c)))),
+      h('tbody', {}, themes.map((t) => h('tr', {},
+        h('td', {}, t.nom, t.systeme ? h('span', { class: 'tag', style: 'margin-left:6px' }, 'système') : null),
+        h('td', {}, t.mots), h('td', {}, t.mots_valides),
+        h('td', {}, t.systeme ? '✓' : h('input', { type: 'checkbox', style: 'width:auto', checked: t.actif, onchange: (e) => act('PATCH', `/api/admin/themes/${t.id}`, 'Enregistré', { actif: e.target.checked }) })),
+        h('td', { class: 'act' }, t.systeme ? null : [
+          h('button', { class: 'small', onclick: () => { const n = prompt('Nouveau nom', t.nom); if (n?.trim()) act('PATCH', `/api/admin/themes/${t.id}`, 'Renommé', { nom: n.trim() }); } }, 'Renommer'), ' ',
+          h('button', { class: 'small danger', onclick: () => confirm(`Supprimer le thème « ${t.nom} » ?`) && act('DELETE', `/api/admin/themes/${t.id}`, 'Supprimé') }, 'Supprimer')]))))),
+    h('p', { class: 'muted' }, 'Un thème contenant des définitions ne peut pas être supprimé : désactivez-le.'));
+}
+
+if (token) {
+  api('GET', '/api/admin/themes').then(() => start(), () => renderLogin());
+} else renderLogin();
+</script>
+</body>
+</html>
