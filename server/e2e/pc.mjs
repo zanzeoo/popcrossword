@@ -42,7 +42,9 @@ try {
   const code = (await alice.textContent('#lCode')).trim();
   assert.match(code, /^[A-Z0-9]{4}$/);
   assert.match(await alice.inputValue('#lLink'), new RegExp(`:${PORT}/\\?code=${code}$`));
-  assert.ok(await alice.isDisabled('#lStart'), 'lancement possible seul');
+  // Seule dans le salon, la créatrice peut déjà lancer une partie en solo.
+  assert.ok(await alice.isEnabled('#lStart'));
+  assert.equal((await alice.textContent('#lStart')).trim(), 'Lancer la partie en solo');
 
   step(`Bob rejoint avec le lien d'invitation (${code})`);
   await bob.goto(`${URL_}/pc/?code=${code}`);
@@ -52,6 +54,7 @@ try {
   await bob.waitForSelector('#scrLobby.on');
   await alice.waitForFunction(() => document.querySelectorAll('#lPlayers .pill').length === 2);
   assert.ok(await bob.isHidden('#lStart'));
+  await alice.waitForFunction(() => document.querySelector('#lStart').textContent.trim() === 'Lancer la partie');
   assert.ok(await bob.isDisabled('#lStartScore'));
 
   step('Alice règle la partie, Bob voit les réglages');

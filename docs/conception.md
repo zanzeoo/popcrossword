@@ -16,7 +16,7 @@ Un jeu de mots fléchés multijoueur en ligne, en compétition, dont les répons
 Le seul mode de la première version est la **compétition en temps réel, en salon privé**.
 
 1. Un joueur choisit un **pseudo** (pas de compte) et crée un salon. Il reçoit un **code à 4 caractères** à partager.
-2. Les autres joueurs saisissent leur pseudo et rejoignent le salon avec ce code : **2 à 8 joueurs**.
+2. Les autres joueurs saisissent leur pseudo et rejoignent le salon avec ce code : **jusqu'à 8 joueurs**. Le créateur peut aussi lancer la partie seul.
 3. Le créateur règle le salon :
    - le **dosage des thèmes**, par curseurs dont le total fait toujours 100 % ;
    - le **mode de jeu** : Classique ou Dernière chance ;
@@ -183,11 +183,14 @@ Côté serveur, chaque droit est vérifié par l'API : masquer un bouton ne prot
 ### Mobile
 
 - **Clavier AZERTY intégré** au jeu, à la place du clavier natif : la mise en page reste stable, sans autocorrection ni majuscules automatiques.
-- Les cases de définition n'affichent que leurs **flèches**. La définition complète apparaît dans un **bandeau** au-dessus du clavier, avec les boutons mot précédent et mot suivant.
+- **Le clavier est replié par défaut**, pour laisser toute la place à la grille. Toucher une case ou la définition l'ouvre ; une poignée « Replier le clavier » le referme. Il s'ouvre tout seul pour le mot mystère.
+- **La grille occupe tout l'écran** : clavier replié, elle tient en entier (cases de 30 px au minimum, 28 px sur les écrans de 320 px de large) ; clavier ouvert, elle défile et suit le mot en cours.
+- **Loupe** (en-tête) : agrandit la grille d'environ 1,7 fois. Les cases de définition affichent alors leur texte, et la grille défile dans les deux sens en suivant le curseur. Le choix est mémorisé.
+- Sans loupe, les cases de définition n'affichent que leurs **flèches**. La définition complète apparaît dans un **bandeau** sous la grille, avec les boutons mot précédent et mot suivant.
 - Une **ligne d'info** au-dessus de la grille affiche les événements de la partie sans jamais masquer de case. Les retours du joueur (raté, bien joué) restent affichés au moins 1,8 s.
-- Le **menu ☰** donne accès au fil de la partie, à une fiche « Légende et règles » et aux raccourcis de test.
-- Testé sur 390 × 844 (iPhone) et 360 × 740 (petit Android), sans défilement.
-- À venir : application installable sur l'écran d'accueil (PWA), en plein écran.
+- Le **menu ☰** donne accès au fil de la partie, à une fiche « Légende et règles » et à la sortie du salon.
+- Testé sur iPhone 13 (390 × 664 utiles), iPhone SE (320 × 568) et Pixel 7 (412 × 839).
+- **Application installable** sur l'écran d'accueil (PWA), en plein écran.
 
 ### Couleurs des joueurs
 

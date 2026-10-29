@@ -73,14 +73,39 @@ try {
   const room = rooms.rooms.get(code);
   const words = room.game.grid.words;
   assert.equal(await bob.locator('#gGrid .cell').count(), 130);
-  assert.equal(await bob.locator('#gKb [data-k]').count(), 28);
   const gridBox = await bob.locator('#gGrid').boundingBox();
   assert.ok(gridBox.width <= 390, `grille trop large : ${gridBox.width}`);
   await bob.screenshot({ path: `${OUT}m2-partie-bob.png` });
 
+  step('Clavier replié au départ, grille entière visible ; toucher une case ouvre le clavier');
+  assert.ok(await bob.isHidden('#gKb'));
+  const cell = await bob.evaluate(() => parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell'), 10));
+  assert.ok(cell >= 30, `cases trop petites : ${cell}px`);
+  const wrapFits = await bob.evaluate(() => { const w = document.querySelector('#gWrap'); return w.scrollHeight <= w.clientHeight + 1; });
+  assert.ok(wrapFits, 'la grille ne tient pas en entier clavier replié');
+  const lastWord = words.reduce((a, w) => (w.cells[0] > a.cells[0] ? w : a));
+  await bob.locator('#gGrid .cell').nth(lastWord.cells[0]).tap();
+  await bob.waitForSelector('#gKb:not([hidden])');
+  assert.equal(await bob.locator('#gKb [data-k]').count(), 29); // 26 lettres, effacer, valider, replier
+  await sleep(300); // laisse la zone de la grille prendre sa nouvelle hauteur
+  const visible = await bob.evaluate((k) => { const r = cellEls[k].getBoundingClientRect(), w = document.querySelector('#gWrap').getBoundingClientRect(); return r.top >= w.top - 1 && r.bottom <= w.bottom + 1; }, lastWord.cells[0]);
+  assert.ok(visible, 'la case touchée est cachée par le clavier');
+  assert.equal(await bob.evaluate(() => parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell'), 10)), cell); // pas de saut de taille
+  await bob.tap('#gKb [data-k=HIDE]');
+  await bob.waitForSelector('#gKb', { state: 'hidden' });
+
+  step('Loupe : cases agrandies, définitions lisibles dans les cases');
+  await bob.tap('#gZoom');
+  const zoomed = await bob.evaluate(() => parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell'), 10));
+  assert.ok(zoomed >= cell * 1.5, `loupe sans effet : ${zoomed}px`);
+  assert.ok(await bob.locator('#gGrid .dq .tx').first().isVisible());
+  await bob.screenshot({ path: `${OUT}m2b-loupe-bob.png` });
+  await bob.tap('#gZoom');
+  assert.ok(await bob.locator('#gGrid .dq .tx').first().isHidden());
+
   // Bob joue au clavier intégré ; Alice au clavier physique.
   async function bobPlays(wi, letters) {
-    await bob.evaluate((i) => { selectWord(i, G.words[i].cells[0]); render(); }, wi);
+    await bob.evaluate((i) => { ui.kb = true; selectWord(i, G.words[i].cells[0]); render(); }, wi);
     for (const ch of letters) await bob.tap(`#gKb [data-k="${ch}"]`);
     await bob.tap('#gKb [data-k="OK"]');
   }

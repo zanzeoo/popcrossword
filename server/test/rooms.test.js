@@ -270,6 +270,27 @@ test('dernière chance : la partie s\'arrête dès que tout le monde a joué', a
   assert.ok(Object.values(again.scores).every((v) => v === 100));
 });
 
+test('partie en solo : le créateur lance seul, la dernière chance s\'arrête au mot mystère', async () => {
+  const s = await startServer();
+  const a = client(s.url);
+  const r = await send(a, 'room:create', { pseudo: 'Solo', settings: { mode: 'derniere_chance' } });
+  assert.ok(r.ok);
+  assert.ok((await send(a, 'game:start')).ok);
+  await waitFor(a, 'game:grid');
+  const room = s.rooms.rooms.get(r.code), g = room.game;
+  assert.equal(room.status, 'playing');
+
+  // Un mot trouvé seul : points et lettres comme en partie à plusieurs.
+  const res = await send(a, 'word:submit', { word: 0, letters: g.grid.words[0].ans });
+  assert.ok(res.correct);
+  // Mot mystère : personne d'autre n'est attendu, la partie s'arrête aussitôt.
+  g.letters.slice(0, Math.ceil(g.letters.length * 0.85)).forEach((k) => { g.fill[k] ??= 'p1'; });
+  assert.ok((await send(a, 'mystery:submit', { letters: g.grid.myst.ans })).correct);
+  const over = await waitFor(a, 'game:over');
+  assert.match(over.reason, /Solo a trouvé le mot mystère/);
+  assert.equal(over.ranking.length, 1);
+});
+
 test('thèmes et fichiers servis', async () => {
   const s = await startServer();
   const themes = await (await fetch(`${s.url}/api/themes`)).json();

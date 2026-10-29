@@ -24,12 +24,12 @@ Les règles du jeu sont arrêtées pour une première version. Le **serveur tour
 
 Ouvrir https://popcrossword.zanzeoo.fr, choisir un pseudo et créer un salon, puis partager le lien d'invitation. La page envoie chaque appareil vers la bonne version (`/pc/` ou `/mobile/`), et un même salon mélange PC et téléphones. Sur téléphone, « Ajouter à l'écran d'accueil » installe le jeu comme une application.
 
-Il faut au moins deux joueurs ; deux onglets du même navigateur comptent pour deux joueurs. Recharger la page en pleine partie la reprend là où elle en était.
+Le créateur peut lancer la partie seul ou attendre les autres (jusqu'à 8 joueurs) ; deux onglets du même navigateur comptent pour deux joueurs. Recharger la page en pleine partie la reprend là où elle en était.
 
 ## Le jeu en bref
 
 - **Grille 10 × 13** en portrait, environ 35 mots, générée à chaque partie. Le créateur du salon dose les thèmes avec des curseurs.
-- **Salon privé** de 2 à 8 joueurs, avec un simple pseudo et sans compte.
+- **Salon privé** de 1 à 8 joueurs, avec un simple pseudo et sans compte. Le créateur peut aussi jouer seul.
 - **Validation par mot entier** : on tape tout le mot, lettres déjà posées comprises.
 - **Score** : tout le monde part du même score. Chaque lettre rapporte des points, les définitions difficiles comptent double, et chaque erreur coûte une pénalité.
 - **Bonus « mot vierge »** quand on trouve un mot dont aucune lettre n'est encore posée.

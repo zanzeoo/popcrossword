@@ -10,6 +10,8 @@ Les choix faits pendant la conception, dans l'ordre où ils ont été pris. Le d
 | **Salons privés** uniquement | Rejoints par un code. Pas de grille partagée par des milliers de joueurs pour l'instant. |
 | **Pseudo** sans compte | Pour la première version. |
 | **2 à 8 joueurs** par salon | La grille reste en 10 × 13 même à 8 : les parties sont plus courtes et plus nerveuses. |
+| **Partie en solo** possible (1 à 8 joueurs) | Le créateur n'a pas à attendre un autre joueur pour lancer : utile pour tester une grille ou jouer seul. En mode Dernière chance, la partie s'arrête dès qu'il trouve le mot mystère. |
+| Mobile : **clavier replié par défaut** et **loupe** | Retour de test : la grille était trop petite (cases de 22 px sur iPhone) avec un clavier toujours ouvert. Clavier replié, la grille tient à l'écran en cases de 30 px ou plus ; la loupe affiche le texte des définitions dans les cases. |
 | **Temps de résolution** enregistré | Pour chaque partie. |
 | Variante **« Dernière chance »** | Dès que le mot mystère est trouvé, chaque autre joueur a un seul essai (mot de la grille ou mot mystère), avec un compte à rebours, puis la partie s'arrête. |
 

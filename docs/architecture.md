@@ -35,7 +35,7 @@ Chaque message client reçoit un accusé : `{ ok: true, ... }` ou `{ ok: false, 
 | `room:resume` | jeton | reconnexion : renvoie l'état complet (`room:state`, puis `game:grid` ou `game:over`) |
 | `room:settings` | réglages partiels | créateur seulement, salon en attente |
 | `room:leave` | — | en attente, libère la place (le créateur passe la main) ; en partie, le joueur reste au classement |
-| `game:start` | — | créateur seulement, 2 joueurs au minimum |
+| `game:start` | — | créateur seulement ; possible dès qu'il est seul dans le salon |
 | `word:submit` | `word` (index), `letters` | une tentative par seconde (Redis) ; mot encore libre ; joueur pas verrouillé par la dernière chance |
 | `mystery:submit` | `letters` | grille remplie à 80 % ou plus ; une seule proposition par joueur ; bonne longueur |
 
@@ -66,6 +66,8 @@ Réglages : `mode` (`classique` ou `derniere_chance`), `startScore` (0-1000), `p
 **Origine** : le serveur refuse les connexions WebSocket venant d'une autre origine que `PUBLIC_ORIGIN` (par défaut `https://popcrossword.zanzeoo.fr`).
 
 ## API REST : définitions et administration
+
+**État actuel** : la modération, l'administration et l'export (tout sauf `POST /api/definitions` et `GET /api/definitions/mine`, qui attendent les comptes joueurs) sont codés dans `server/src/api/`. Faute de rôles, ils sont protégés par un jeton unique : `ADMIN_TOKEN` dans `server/.env`, envoyé en `Authorization: Bearer <jeton>`. Il vaut rôle admin (le journal est signé par le joueur « admin »). Sans `ADMIN_TOKEN`, ces routes répondent 503. Ajouts : `GET /api/admin/definitions/:id`, `GET /api/admin/definitions/:id/journal`. Un thème n'est supprimable que s'il est vide, sinon on le désactive.
 
 | Méthode et route | Rôle minimum | Effet |
 | --- | --- | --- |

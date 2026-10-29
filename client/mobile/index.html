@@ -88,7 +88,7 @@ input[type=range]{width:100%;accent-color:#FACC15;height:28px}
 .finalbar .big{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;color:#FDBA74}
 
 .scores{display:grid;gap:5px;flex:none}
-.chip{background:var(--panel);border-radius:10px;padding:5px 8px;display:flex;flex-direction:column;gap:1px;min-width:0}
+.chip{background:var(--panel);border-radius:9px;padding:4px 8px;display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0}
 .chip.me{box-shadow:inset 0 0 0 1.5px #8B93FF}
 .chip.done{opacity:.55}
 .chip .n{display:flex;align-items:center;gap:5px;font-size:11.5px;color:#C9CCE4;min-width:0}
@@ -118,8 +118,8 @@ input[type=range]{width:100%;accent-color:#FACC15;height:28px}
 .mres.ok{color:#86EFAC}
 .mres.ko{color:#FCA5A5}
 
-.gridwrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative}
-.grid{display:grid;grid-template-columns:repeat(10,var(--cell));grid-auto-rows:var(--cell);gap:1px;padding:1px;background:#4A4F7A;border-radius:4px}
+.gridwrap{flex:1;min-height:0;display:flex;position:relative;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;border-radius:6px}
+.grid{display:grid;grid-template-columns:repeat(10,var(--cell));grid-auto-rows:var(--cell);gap:1px;padding:1px;background:#4A4F7A;border-radius:4px;margin:auto;flex:none}
 .grid.shake{animation:shake .35s ease}
 @keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
 .cell{border:0;padding:0;margin:0;position:relative;display:flex;align-items:center;justify-content:center;background:#fff;cursor:pointer;font-weight:700;font-size:calc(var(--cell) * .56);line-height:1;overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none}
@@ -154,7 +154,7 @@ input[type=range]{width:100%;accent-color:#FACC15;height:28px}
 .toast .dot{margin-top:4px}
 @keyframes tin{from{opacity:0;transform:translateY(-6px)}}
 
-.banner{min-height:58px;background:var(--panel);border-radius:12px;display:flex;align-items:center;gap:7px;padding:6px;flex:none}
+.banner{height:72px;background:var(--panel);border-radius:12px;display:flex;align-items:center;gap:7px;padding:6px;flex:none;overflow:hidden} /* hauteur fixe : la grille ne bouge pas d'un mot à l'autre */
 .banner .nav{width:34px;height:46px;border-radius:9px;border:0;background:var(--panel2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;padding:0;touch-action:manipulation}
 .banner .nav.wide{width:auto;padding:0 12px;font-size:13px;font-weight:600}
 .banner .ic{width:28px;height:28px;border-radius:8px;background:var(--panel2);display:flex;align-items:center;justify-content:center;flex:none}
@@ -162,7 +162,7 @@ input[type=range]{width:100%;accent-color:#FACC15;height:28px}
 .banner .txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
 .banner .txt.pad{padding:0 6px}
 .banner .clue{font-size:15px;font-weight:500;line-height:1.2;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
-.banner .meta{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.banner .meta{display:flex;gap:5px;align-items:center;flex-wrap:nowrap;overflow:hidden;white-space:nowrap}
 .banner .len{font-size:11px;color:var(--muted);line-height:1.3}
 .banner .answ{font-size:14px;font-weight:700;letter-spacing:.12em;background:#F4F4F8;color:#14162B;border-radius:5px;padding:2px 7px}
 .banner .who{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#C9CCE4}
@@ -222,6 +222,21 @@ ul.rules{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;f
 .bar .v{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
 .loading{position:absolute;inset:0;background:rgba(20,22,43,.88);display:flex;align-items:center;justify-content:center;font-size:16px;z-index:60}
 .loading[hidden]{display:none}
+/* ---------- Grille agrandie (loupe) : le texte des définitions apparaît dans les cases ---------- */
+.zoom .dq{position:relative;padding:2px 3px}
+.zoom .dq .tx{display:-webkit-box;font-size:calc(var(--cell) * .15);line-height:1.12;text-align:center;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:4;word-break:break-word;hyphens:auto;font-weight:500}
+.zoom .cell.def.two .dq .tx{-webkit-line-clamp:2}
+.zoom .dq .ar,.zoom .cell.def.two .dq .ar{position:absolute;width:calc(var(--cell) * .2);height:calc(var(--cell) * .2)}
+.zoom .dq.r .ar{right:0;top:50%;transform:translateY(-50%)}
+.zoom .dq.d .ar{bottom:0;left:50%;transform:translateX(-50%)}
+.zoom .dq.r{padding-right:calc(var(--cell) * .17)}
+.zoom .dq.d{padding-bottom:calc(var(--cell) * .15)}
+.iconbtn[aria-pressed=true]{background:#F4F4F8;color:#14162B}
+/* ---------- Clavier escamotable ---------- */
+.kbhide{height:22px;border:0;background:transparent;color:var(--muted);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;padding:0;touch-action:manipulation}
+.banner .txt.open{cursor:pointer}
+.banner .kbcall{font-size:11px;font-weight:600;color:#FDE68A;white-space:nowrap}
+
 /* ---------- Client connecté ---------- */
 [hidden]{display:none!important}
 a{color:#FDE68A}
@@ -267,7 +282,7 @@ a{color:#FDE68A}
   </form>
   <div class="card">
     <h2>Nouveau salon</h2>
-    <p class="note">Tu règles la partie et tu partages le code avec les autres joueurs (2 à 8).</p>
+    <p class="note">Tu règles la partie et tu partages le code avec les autres joueurs (jusqu'à 8), ou tu joues seul.</p>
     <button class="btn" type="button" id="hCreate">Créer un salon</button>
   </div>
   <p class="notice err" id="hMsg" role="alert"></p>
@@ -333,6 +348,7 @@ a{color:#FDE68A}
   <header class="top">
     <div><span class="eyebrow">Salon privé</span><div class="c" id="gCode">Code ----</div></div>
     <div class="timer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M9 2h6"/></svg><span id="gTimer">00:00</span></div>
+    <button class="iconbtn" id="gZoom" type="button" aria-pressed="false" aria-label="Agrandir la grille" title="Agrandir la grille"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/><path d="M8 10.5h5"/><path class="zplus" d="M10.5 8v5"/></svg></button>
     <div class="menuwrap">
       <button class="iconbtn" id="gMenuBtn" aria-label="Menu" aria-expanded="false" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg></button>
       <div class="menu" id="gMenu" hidden>
@@ -382,6 +398,10 @@ a{color:#FDE68A}
    ===================================================================== */
 function mNote(msg) { notice(msg, 'err'); }
 
+// Affichage propre au mobile : clavier replié tant qu'on ne touche pas la grille,
+// loupe mémorisée d'une partie à l'autre.
+const ui = { kb: false, zoom: !!lsGet(localStorage, 'motscultes.zoom'), follow: null };
+
 function render() {
   if (!S || !G) return;
   renderGrid();
@@ -389,7 +409,19 @@ function render() {
   renderScores();
   renderClue();
   renderMystery();
-  renderKeyboard();
+  // Clavier ouvert ou replié : la zone de la grille vient de changer de hauteur, recentrage immédiat.
+  followCursor(renderKeyboard());
+}
+
+// Garde la case du curseur visible quand la grille défile (grande grille, loupe, clavier ouvert).
+function followCursor(force) {
+  if (!S || S.over && !S.review) return;
+  const k = S.review ? (S.sel.w != null ? G.words[S.sel.w].cells[0] : null) : S.sel.cursor;
+  if (k == null || (!force && ui.follow === k)) return;
+  ui.follow = k;
+  const wrap = $('#gWrap'), el = cellEls[k];
+  if (!el || wrap.scrollHeight <= wrap.clientHeight + 1 && wrap.scrollWidth <= wrap.clientWidth + 1) return;
+  el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: force ? 'auto' : 'smooth' });
 }
 
 function renderFinal() {
@@ -459,11 +491,12 @@ function renderClue() {
   const arrow = w.dir === 'h'
     ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15"/><path d="M14 7l5 5-5 5"/></svg>'
     : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v15"/><path d="M7 14l5 5 5-5"/></svg>';
+  const call = ui.kb ? '' : '<span class="kbcall">Toucher pour écrire</span>';
   el.innerHTML = `${prev}
     <span class="ic${w.hard ? ' hard' : ''}">${arrow}</span>
-    <div class="txt">
+    <div class="txt open" data-b="kb">
       <span class="clue">${esc(w.clue)}</span>
-      <div class="meta"><span class="len">${w.len} lettres · ${wordBase(w)} pts</span>${badges.join('')}</div>
+      <div class="meta"><span class="len">${w.len} lettres · ${wordBase(w)} pts</span>${badges.join('')}${call}</div>
     </div>${next}`;
 }
 
@@ -512,10 +545,28 @@ function onLog(entry, pid) {
 function renderFeed() { if (sheetView === 'feed') renderSheet(); }
 
 function fitGrid() {
-  const b = $('#gWrap');
+  const b = $('#gWrap'), kb = $('#gKb');
   if (!b || !b.clientWidth) return;
-  const cell = Math.floor(Math.min((b.clientWidth - 11) / 10, (b.clientHeight - 14) / 13));
-  document.documentElement.style.setProperty('--cell', Math.max(22, Math.min(cell, 46)) + 'px');
+  // Hauteur disponible clavier replié : la taille des cases ne change pas quand il s'ouvre.
+  const kbH = kb.hidden ? 0 : kb.offsetHeight + 5;
+  const byWidth = Math.floor((b.clientWidth - 11) / 10);
+  const byHeight = Math.floor((b.clientHeight + kbH - 14) / 13);
+  const cell = ui.zoom
+    ? Math.min(Math.round(byWidth * 1.7), 76)           // loupe : on fait défiler dans les deux sens
+    : Math.min(byWidth, Math.max(byHeight, 30), 56);    // sinon toute la grille (30 px au moins), sans dépasser en largeur
+  document.documentElement.style.setProperty('--cell', cell + 'px');
+  $('#app').classList.toggle('zoom', ui.zoom);
+}
+function setZoom(on) {
+  ui.zoom = on;
+  lsSet(localStorage, 'motscultes.zoom', on || null);
+  const btn = $('#gZoom');
+  btn.setAttribute('aria-pressed', String(on));
+  btn.setAttribute('aria-label', on ? 'Réduire la grille' : 'Agrandir la grille');
+  btn.title = btn.getAttribute('aria-label');
+  btn.querySelector('.zplus').style.display = on ? 'none' : '';
+  fitGrid();
+  followCursor(true);
 }
 
 /* ---------------- Menu ---------------- */
@@ -625,13 +676,21 @@ function initGameEvents() {
       renderKeyboard();
       return;
     }
+    if (k === 'HIDE') { ui.kb = false; render(); return; }
     if (k === 'BACK') backspace(); else if (k === 'OK') submit(); else typeLetter(k);
   });
+  // Toucher une case ouvre le clavier (avant le traitement commun de la case).
+  $('#gGrid').addEventListener('click', e => {
+    const c = e.target.closest('.cell');
+    if (c && S && !S.over && !S.review && !c.classList.contains('filler')) { ui.kb = true; ui.follow = null; }
+  }, true);
+  $('#gZoom').addEventListener('click', () => setZoom(!ui.zoom));
   $('#gBanner').addEventListener('click', e => {
     if (!S) return;
     const b = e.target.closest('[data-nav],[data-b]');
     if (!b) return;
     if (b.dataset.b === 'cancel') { closeMystery(); return; }
+    if (b.dataset.b === 'kb') { ui.kb = !ui.kb; render(); return; }
     if (S.mode !== 'grid' || (S.over && !S.review)) return;
     selectNext(+b.dataset.nav);
     render();
@@ -681,7 +740,9 @@ function initGameEvents() {
     else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { moveCursor(-1); e.preventDefault(); }
     else if (e.key === 'Escape') closeMenu();
   });
-  if (window.ResizeObserver) new ResizeObserver(fitGrid).observe($('#gWrap'));
+  // La zone de la grille change de hauteur (clavier, bandeau sur une ou deux lignes, police chargée) :
+  // on recalcule les cases et on garde le curseur visible.
+  if (window.ResizeObserver) new ResizeObserver(() => { fitGrid(); followCursor(true); }).observe($('#gWrap'));
   window.addEventListener('resize', fitGrid);
   // Chronomètre et compte à rebours : la fin de la dernière chance est décidée par le serveur.
   setInterval(() => {
@@ -714,7 +775,7 @@ function showTick(msg, kind, color) {
 
 const KB_KEYS = (() => {
   const rows = ['AZERTYUIOP', 'QSDFGHJKLM', 'WXCVBN'];
-  let h = '';
+  let h = '<button class="kbhide" type="button" data-k="HIDE" aria-label="Replier le clavier"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>Replier le clavier</button>';
   rows.forEach((r, i) => {
     h += '<div class="r">';
     if (i === 2) h += '<button class="key back" type="button" data-k="BACK" aria-label="Effacer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5h11v14H9l-6-7z"/><path d="M12 9l5 6"/><path d="M17 9l-5 6"/></svg></button>';
@@ -732,11 +793,16 @@ function renderKeyboard() {
   const kb = $('#gKb');
   const view = S.review ? 'review' : 'keys';
   if (kb.dataset.view !== view) { kb.innerHTML = view === 'review' ? KB_REVIEW : KB_KEYS; kb.dataset.view = view; }
+  // Le clavier n'apparaît que pour écrire : mot mystère, ou mot choisi en touchant la grille.
+  const show = view === 'review' || S.mode === 'mystery' || (ui.kb && S.sel.w != null && !S.over && !locked(me));
+  const changed = kb.hidden === show;
+  if (changed) kb.hidden = !show;
   if (view === 'keys') {
-    const dim = S.over || (locked(me) && S.mode !== 'mystery');
-    kb.classList.toggle('dim', dim);
-    $('#gOk').textContent = S.mode === 'mystery' ? 'Proposer' : (locked(me) ? 'Joué' : 'Valider');
-  } else kb.classList.remove('dim');
+    kb.classList.remove('dim');
+    $('#gOk').textContent = S.mode === 'mystery' ? 'Proposer' : 'Valider';
+    kb.querySelector('.kbhide').hidden = S.mode === 'mystery';
+  }
+  return changed;
 }
 
 let sheetView = null;
@@ -768,6 +834,7 @@ function renderSheet() {
         <li>Départ : <b>${s.startScore} pts</b>. Mot faux : <b>−${s.penWord}</b>. Mot mystère faux : <b>−${s.penMyst}</b>.</li>
         <li>Gains : ${PTS_LETTER} pts par lettre, ×${HARD_MULT} si difficile, +${BONUS_VIERGE} mot vierge, +${PRIME_TWIN} par jumelle révélée, +${BONUS_MYST} mot mystère.</li>
         <li>Mot mystère : proposable à ${MYST_THRESHOLD} % de grille remplie, une seule proposition.</li>
+        <li>Touche une case pour écrire ; la loupe en haut agrandit la grille et affiche les définitions dans les cases.</li>
         <li>Mode ${s.mode === 'classique' ? '<b>classique</b> : fin quand la grille est complète.' : `<b>dernière chance</b> : dès que le mot mystère est trouvé, chacun a un seul essai (${s.lastTime} s).`}</li>
       </ul>`;
   }
@@ -775,6 +842,7 @@ function renderSheet() {
 
 boot();
 initGameEvents();
+setZoom(ui.zoom);
 
 // PWA : installable sur l'écran d'accueil. Le service worker garde l'interface en cache ;
 // la partie elle-même passe toujours par le réseau.
